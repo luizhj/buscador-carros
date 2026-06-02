@@ -69,7 +69,7 @@
           <td>R$ {{ "%.2f"|format(ad.price / 100) }}</td>
           <td>{{ ad.year }}</td>
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
-          <td>{{ ad.city }}{{ '-' if ad.city and ad.state else '' }}{{ ad.state }}</td>
+          <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
           <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
         </tr>
         {% endfor %}
