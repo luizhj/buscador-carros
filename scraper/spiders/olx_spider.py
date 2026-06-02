@@ -13,9 +13,6 @@ if _project_root not in sys.path:
 
 from models import CarListing, get_session, init_db
 
-SPIDER_MODULES = ["spiders"]
-
-
 class CarItem(scrapy.Item):
     olx_id = scrapy.Field()
     title = scrapy.Field()
