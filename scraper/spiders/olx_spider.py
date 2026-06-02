@@ -182,6 +182,7 @@ class OlxSpider(scrapy.Spider):
             transmission=props.get("gearbox"),
             color=props.get("carcolor"),
             neighborhood=neighborhood,
+            zip_code=props.get("cep"),
             seller_name=seller_name,
             city=city,
             state=state,
