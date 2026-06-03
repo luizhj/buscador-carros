@@ -5,3 +5,5 @@ car_listings.db
 *.db
 .venv/
 venv/
+.current_url
+scrape.log

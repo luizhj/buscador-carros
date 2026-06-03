@@ -3,36 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scraping — Carros OLX</title>
+<title>Atualizando — Carros OLX</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light">
-<div class="container py-4">
-  <h1 class="mb-4">Atualizando...</h1>
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <pre id="log" style="max-height: 600px; overflow-y: auto; font-size:0.85em; margin:0;"></pre>
-    </div>
+<body class="bg-light d-flex align-items-center" style="min-height:100vh;">
+<div class="container text-center">
+  <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+    <span class="visually-hidden">Carregando...</span>
   </div>
-  <div class="mt-3" id="done" style="display:none;">
-    <a href="/" class="btn btn-primary">Ver resultados</a>
+  <h2 class="mb-2">Atualizando anúncios...</h2>
+  <p class="text-muted" id="status">Aguarde enquanto os dados são baixados</p>
+  <div class="progress mx-auto" style="max-width:400px;height:20px;">
+    <div id="bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
   </div>
+  <p class="mt-2 text-muted small" id="counter"></p>
 </div>
 <script>
-const logEl = document.getElementById('log');
-const doneEl = document.getElementById('done');
+const bar = document.getElementById('bar');
+const status = document.getElementById('status');
+const counter = document.getElementById('counter');
 let lastLen = 0;
+let maxItems = 0;
 
 async function poll() {
   const resp = await fetch('/scrape-log');
   const text = await resp.text();
   if (text.length > lastLen) {
-    logEl.textContent = text;
-    logEl.scrollTop = logEl.scrollHeight;
     lastLen = text.length;
+    const lines = text.trim().split('\n');
+    const lastLine = lines[lines.length - 1];
+    const m = lastLine.match(/Scraped (\d+) items/);
+    if (m) {
+      const n = parseInt(m[1]);
+      maxItems = Math.max(maxItems, n);
+      const pct = Math.min(Math.round(n / 25 * 4), 95);
+      bar.style.width = pct + '%';
+      counter.textContent = n + ' anúncios baixados';
+    }
   }
   if (text.includes('Done!')) {
-    doneEl.style.display = 'block';
+    bar.style.width = '100%';
+    bar.classList.remove('progress-bar-animated');
+    status.textContent = 'Concluído! Redirecionando...';
+    setTimeout(() => window.location.href = '/', 800);
   } else {
     setTimeout(poll, 1000);
   }
