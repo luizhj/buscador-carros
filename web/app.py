@@ -71,7 +71,20 @@ def index():
         if models := request.args.getlist("model"):
             q = q.filter(CarListing.model.in_(models))
 
-        listings = q.filter(CarListing.olx_id.isnot(None)).order_by(CarListing.created_at.desc()).all()
+        sort = request.args.get("sort", "")
+        order = CarListing.created_at.desc()
+        if sort == "price_asc":
+            order = CarListing.price.asc().nullslast()
+        elif sort == "price_desc":
+            order = CarListing.price.desc().nullslast()
+        elif sort == "year_asc":
+            order = CarListing.year.asc().nullslast()
+        elif sort == "year_desc":
+            order = CarListing.year.desc().nullslast()
+        elif sort == "km_asc":
+            order = CarListing.mileage.asc().nullslast()
+
+        listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
         cities = [
             c[0]
             for c in session.query(CarListing.city)
@@ -102,6 +115,7 @@ def index():
             selected_brands=brands,
             available_models=available_models,
             selected_models=request.args.getlist("model"),
+            sort=sort,
         )
     finally:
         session.close()

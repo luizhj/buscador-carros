@@ -13,8 +13,10 @@
   <form method="GET" class="row">
     <div class="col-md-3 mb-3">
       <div class="card shadow-sm">
-        <div class="card-header fw-bold">Marcas</div>
-        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#brands-collapse" aria-expanded="true">
+          Marcas <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="brands-collapse" style="max-height: 400px; overflow-y: auto;">
           {% for brand, count in available_brands %}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="brand" value="{{ brand }}"
@@ -24,14 +26,12 @@
           </div>
           {% endfor %}
         </div>
-        <div class="card-footer">
-          <button class="btn btn-primary btn-sm w-100">Filtrar</button>
-          <a href="/" class="btn btn-outline-secondary btn-sm w-100 mt-1">Limpar</a>
-        </div>
       </div>
       <div class="card shadow-sm mt-2">
-        <div class="card-header fw-bold">Modelos</div>
-        <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#models-collapse" aria-expanded="true">
+          Modelos <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="models-collapse" style="max-height: 500px; overflow-y: auto;">
           {% for model, count in available_models %}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="model" value="{{ model }}"
@@ -49,32 +49,52 @@
     </div>
 
     <div class="col-md-9">
-      <div class="row g-2 mb-3 p-3 bg-white rounded shadow-sm">
-        <div class="col-md-3">
-          <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q', '') }}">
+      <div class="mb-3 p-3 bg-white rounded shadow-sm">
+        <div class="row g-2">
+          <div class="col-md-2">
+            <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q', '') }}">
+          </div>
+          <div class="col-md-2">
+            <input name="price_min" class="form-control" placeholder="Preço min" value="{{ request.args.get('price_min', '') }}">
+          </div>
+          <div class="col-md-2">
+            <input name="price_max" class="form-control" placeholder="Preço máx" value="{{ request.args.get('price_max', '') }}">
+          </div>
+          <div class="col-md-1">
+            <input name="year_min" class="form-control" placeholder="Ano min" value="{{ request.args.get('year_min', '') }}">
+          </div>
+          <div class="col-md-1">
+            <input name="year_max" class="form-control" placeholder="Ano máx" value="{{ request.args.get('year_max', '') }}">
+          </div>
+          <div class="col-md-1">
+            <input name="km_max" class="form-control" placeholder="KM máx" value="{{ request.args.get('km_max', '') }}">
+          </div>
+          <div class="col-md-2">
+            <select name="city" class="form-select">
+              <option value="">Todas cidades</option>
+              {% for c in cities %}
+              <option value="{{ c }}" {% if request.args.get('city') == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-        <div class="col-md-2">
-          <input name="price_min" class="form-control" placeholder="Preço min" value="{{ request.args.get('price_min', '') }}">
-        </div>
-        <div class="col-md-2">
-          <input name="price_max" class="form-control" placeholder="Preço máx" value="{{ request.args.get('price_max', '') }}">
-        </div>
-        <div class="col-md-1">
-          <input name="year_min" class="form-control" placeholder="Ano min" value="{{ request.args.get('year_min', '') }}">
-        </div>
-        <div class="col-md-1">
-          <input name="year_max" class="form-control" placeholder="Ano máx" value="{{ request.args.get('year_max', '') }}">
-        </div>
-        <div class="col-md-1">
-          <input name="km_max" class="form-control" placeholder="KM máx" value="{{ request.args.get('km_max', '') }}">
-        </div>
-        <div class="col-md-2">
-          <select name="city" class="form-select">
-            <option value="">Todas cidades</option>
-            {% for c in cities %}
-            <option value="{{ c }}" {% if request.args.get('city') == c %}selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-          </select>
+        <div class="row mt-2">
+          <div class="col-md-2">
+            <select name="sort" class="form-select">
+              <option value="" {% if sort == '' %}selected{% endif %}>Mais recentes</option>
+              <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Menor preço</option>
+              <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Maior preço</option>
+              <option value="year_asc" {% if sort == 'year_asc' %}selected{% endif %}>Mais antigo</option>
+              <option value="year_desc" {% if sort == 'year_desc' %}selected{% endif %}>Mais novo</option>
+              <option value="km_asc" {% if sort == 'km_asc' %}selected{% endif %}>Menor KM</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100">Filtrar</button>
+          </div>
+          <div class="col-md-2">
+            <a href="/" class="btn btn-outline-secondary w-100">Limpar</a>
+          </div>
         </div>
       </div>
 
@@ -82,13 +102,13 @@
         <table class="table table-striped table-hover bg-white rounded shadow-sm">
           <thead class="table-dark">
             <tr>
-              <th>Foto</th>
-              <th>Título</th>
-              <th>Preço</th>
-              <th>Ano</th>
-              <th>KM</th>
-              <th>Cidade</th>
-              <th>Link</th>
+              <th style="width:8%">Foto</th>
+              <th style="width:30%">Título</th>
+              <th style="width:10%">Preço</th>
+              <th style="width:7%">Ano</th>
+              <th style="width:10%">KM</th>
+              <th style="width:15%">Cidade</th>
+              <th style="width:5%">Link</th>
             </tr>
           </thead>
           <tbody>
@@ -100,8 +120,8 @@
                 <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
                 {% endif %}
               </td>
-              <td>{{ ad.title }}</td>
-              <td>{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
+              <td style="white-space:normal">{{ ad.title }}</td>
+              <td style="white-space:nowrap">{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
               <td>{{ ad.year }}</td>
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
@@ -114,5 +134,6 @@
     </div>
   </form>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
