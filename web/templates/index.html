@@ -72,6 +72,48 @@
           {% endfor %}
         </div>
       </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#cartype-collapse" aria-expanded="true">
+          Tipo <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="cartype-collapse" style="max-height: 200px; overflow-y: auto;">
+          {% for val, count in available_cartypes %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="cartype_filter" value="{{ val }}" id="ct-{{ loop.index }}"
+              {% if val in selected_cartypes %}checked{% endif %}>
+            <label class="form-check-label" for="ct-{{ loop.index }}">{{ val }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#motor-collapse" aria-expanded="true">
+          Motor <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="motor-collapse" style="max-height: 200px; overflow-y: auto;">
+          {% for val, count in available_motorpowers %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="motorpower_filter" value="{{ val }}" id="mp-{{ loop.index }}"
+              {% if val in selected_motorpowers %}checked{% endif %}>
+            <label class="form-check-label" for="mp-{{ loop.index }}">{{ val }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#gearbox-collapse" aria-expanded="true">
+          Câmbio <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="gearbox-collapse" style="max-height: 200px; overflow-y: auto;">
+          {% for val, count in available_gearboxes %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="gearbox_filter" value="{{ val }}" id="gb-{{ loop.index }}"
+              {% if val in selected_gearboxes %}checked{% endif %}>
+            <label class="form-check-label" for="gb-{{ loop.index }}">{{ val }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
       <div class="mt-2">
         <a href="/marcas" class="btn btn-outline-info btn-sm w-100">Marcas</a>
         <a href="/modelos" class="btn btn-outline-info btn-sm w-100 mt-1">Todos os modelos</a>

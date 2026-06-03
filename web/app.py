@@ -79,6 +79,12 @@ def index():
                 )
             else:
                 q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
+        if cartype_filter := request.args.getlist("cartype_filter"):
+            q = q.filter(CarListing.cartype.in_(cartype_filter))
+        if motorpower_filter := request.args.getlist("motorpower_filter"):
+            q = q.filter(CarListing.motorpower.in_(motorpower_filter))
+        if gearbox_filter := request.args.getlist("gearbox_filter"):
+            q = q.filter(CarListing.transmission.in_(gearbox_filter))
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -132,6 +138,29 @@ def index():
         available_neighborhoods = [(n, c, cnt) for n, c, cnt in raw_neighborhoods if n is not None]
         if no_nb_count:
             available_neighborhoods.append(("Sem bairro informado", "", no_nb_count))
+
+        filtered_q = q  # base for filter-dependent queries
+        available_cartypes = (
+            filtered_q.with_entities(CarListing.cartype, func.count(CarListing.id))
+            .filter(CarListing.cartype.isnot(None), CarListing.olx_id.isnot(None))
+            .group_by(CarListing.cartype)
+            .order_by(CarListing.cartype)
+            .all()
+        )
+        available_motorpowers = (
+            filtered_q.with_entities(CarListing.motorpower, func.count(CarListing.id))
+            .filter(CarListing.motorpower.isnot(None), CarListing.olx_id.isnot(None))
+            .group_by(CarListing.motorpower)
+            .order_by(CarListing.motorpower)
+            .all()
+        )
+        available_gearboxes = (
+            filtered_q.with_entities(CarListing.transmission, func.count(CarListing.id))
+            .filter(CarListing.transmission.isnot(None), CarListing.olx_id.isnot(None))
+            .group_by(CarListing.transmission)
+            .order_by(CarListing.transmission)
+            .all()
+        )
         return render_template(
             "index.html",
             listings=listings,
@@ -144,6 +173,12 @@ def index():
             selected_cities=request.args.getlist("city_check"),
             available_neighborhoods=available_neighborhoods,
             selected_neighborhoods=request.args.getlist("neighborhood_check"),
+            available_cartypes=available_cartypes,
+            available_motorpowers=available_motorpowers,
+            available_gearboxes=available_gearboxes,
+            selected_cartypes=request.args.getlist("cartype_filter"),
+            selected_motorpowers=request.args.getlist("motorpower_filter"),
+            selected_gearboxes=request.args.getlist("gearbox_filter"),
             sort=sort,
         )
     finally:
