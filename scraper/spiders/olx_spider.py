@@ -119,11 +119,6 @@ class OlxSpider(scrapy.Spider):
 
         for ad in ads:
             item = self._item_from_listing_data(ad)
-            ad_url = ad.get("url")
-            if ad_url:
-                desc = self._fetch_description(ad_url)
-                if desc:
-                    item["description"] = desc
             yield item
 
     def _next_listing_url(self, current_url, html):
@@ -143,51 +138,6 @@ class OlxSpider(scrapy.Spider):
         qs = parse_qs(parsed.query, keep_blank_values=True)
         qs["o"] = [str(page_index + 1)]
         return urlunparse(parsed._replace(query=urlencode(qs, doseq=True)))
-
-    def _fetch_description(self, ad_url):
-        self.logger.info("Fetching ad detail: %s", ad_url)
-        time.sleep(self._delay)
-        try:
-            resp = self._http.get(ad_url, timeout=30)
-            if resp.status_code != 200:
-                return None
-            return self._get_description(resp.text)
-        except Exception as e:
-            self.logger.error("Failed to fetch ad %s: %s", ad_url, e)
-            return None
-
-    def _get_description(self, html):
-        data = self._parse_next_data(html)
-        if data:
-            props = data.get("props", {}).get("pageProps", {})
-            ad_data = props.get("ad") or props.get("listing") or {}
-            raw = ad_data.get("description") or ""
-            if raw:
-                return raw.strip()
-
-        from parsel import Selector
-        sel = Selector(text=html)
-        for css_sel in [
-            'meta[name="description"]::attr(content)',
-            'meta[property="og:description"]::attr(content)',
-        ]:
-            raw = sel.css(css_sel).get()
-            if raw:
-                cleaned = raw.replace("&lt;br&gt;", "\n").replace("<br>", "\n").replace("<br/>", "\n")
-                return cleaned.strip()
-
-        for script in sel.css("script[type='application/ld+json']"):
-            try:
-                obj = json.loads(script.css("::text").get())
-                desc = (
-                    (obj.get("makesOffer") or {}).get("itemOffered") or {}
-                ).get("description") or ""
-                if desc:
-                    return desc.strip()
-            except (json.JSONDecodeError, AttributeError):
-                pass
-
-        return None
 
     def _item_from_listing_data(self, ad):
         props = {}
