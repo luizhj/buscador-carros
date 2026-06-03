@@ -62,11 +62,11 @@
           <td>
             {% if ad.image_urls %}
             {% set imgs = ad.image_urls|fromjson %}
-            <img src="{{ imgs[0] }}" width="80" class="rounded" loading="lazy">
+            <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
             {% endif %}
           </td>
           <td>{{ ad.title }}</td>
-          <td>{% if ad.price %}R$ {{ "%.2f"|format(ad.price / 100) }}{% else %}-{% endif %}</td>
+          <td>{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
           <td>{{ ad.year }}</td>
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
           <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>

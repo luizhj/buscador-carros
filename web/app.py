@@ -1,11 +1,38 @@
+import os
+import sys
 import json
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
+import urllib.request
+
+_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 from models import CarListing, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
+_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 app = Flask(__name__)
 app.jinja_env.filters["fromjson"] = lambda s: json.loads(s)
+
+
+def _brl(cents):
+    if cents is None:
+        return "-"
+    return f"R$ {cents / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+app.jinja_env.filters["brl"] = _brl
+
+
+@app.route("/img-proxy")
+def img_proxy():
+    url = request.args.get("url")
+    if not url or not url.startswith("https://img.olx.com.br"):
+        return ("", 400)
+    req = urllib.request.Request(url, headers={"User-Agent": _UA})
+    resp = urllib.request.urlopen(req)
+    return Response(resp.read(), content_type=resp.headers.get("Content-Type", "image/jpeg"))
 
 
 def _int_or_none(val):

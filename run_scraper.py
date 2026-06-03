@@ -12,7 +12,7 @@ init_db()
 pipeline = DatabasePipeline()
 pipeline.open_spider(None)
 
-spider = OlxSpider(max_pages=1)
+spider = OlxSpider()  # sem max_pages = vai até o fim
 seen = 0
 
 for item in spider.start_requests():

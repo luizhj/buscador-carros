@@ -13,6 +13,7 @@ _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
+from config import START_URL, START_PAGE
 from models import CarListing, get_session, init_db
 
 class CarItem(scrapy.Item):
@@ -80,7 +81,7 @@ class OlxSpider(scrapy.Spider):
         self._http = cloudscraper.create_scraper()
         self._delay = 2.0
         self.max_pages = kwargs.get("max_pages", 0)
-        self._start_url = "https://www.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios/estado-pr/regiao-de-curitiba-e-paranagua?pe=50000&sp=5&gb=1&gb=2&ics=1&ics=2&ics=5&cf=1&rs=2016"
+        self._start_url = START_URL if START_PAGE <= 1 else START_URL + "&o=" + str(START_PAGE)
 
     def start_requests(self):
         url = self._start_url
@@ -90,10 +91,10 @@ class OlxSpider(scrapy.Spider):
             page += 1
             if self.max_pages and page > self.max_pages:
                 break
-            self.logger.info("Fetching listing page: %s", url)
+            print(f"  Page {page} — fetching...")
             resp = self._http.get(url, timeout=30)
             if resp.status_code != 200:
-                self.logger.error("Listing page returned %s", resp.status_code)
+                print(f"  ERROR: Listing page returned {resp.status_code}")
                 break
 
             items = self._parse_listing(resp.text, url)
@@ -102,6 +103,7 @@ class OlxSpider(scrapy.Spider):
 
             url = self._next_listing_url(url, resp.text)
             if url:
+                print(f"  Next page → sleeping {self._delay:.1f}s...")
                 time.sleep(self._delay)
 
     def _parse_listing(self, html, current_url):
