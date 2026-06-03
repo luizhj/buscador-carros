@@ -2,9 +2,11 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 
+import cloudscraper
 import scrapy
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -61,57 +63,89 @@ class DatabasePipeline:
 
 class OlxSpider(scrapy.Spider):
     name = "olx"
-    start_urls = [
-        "https://www.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios/estado-pr/regiao-de-curitiba-e-paranagua?pe=50000&sp=5&gb=1&gb=2&ics=1&ics=2&ics=5&cf=1&rs=2016"
-    ]
-
     custom_settings = {
-        "DOWNLOAD_DELAY": 2.0,
-        "ROBOTSTXT_OBEY": True,
-        "ITEM_PIPELINES": {"spiders.olx_spider.DatabasePipeline": 300},
-        "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "ITEM_PIPELINES": {"scraper.spiders.olx_spider.DatabasePipeline": 300},
     }
 
-    total_pages = None
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._http = cloudscraper.create_scraper()
+        self._delay = 2.0
+        self.max_pages = kwargs.get("max_pages", 0)
+        self._start_url = "https://www.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios/estado-pr/regiao-de-curitiba-e-paranagua?pe=50000&sp=5&gb=1&gb=2&ics=1&ics=2&ics=5&cf=1&rs=2016"
 
-    def parse(self, response):
-        data = self._parse_next_data(response)
+    def start_requests(self):
+        url = self._start_url
+        page = 0
+
+        while url:
+            page += 1
+            if self.max_pages and page > self.max_pages:
+                break
+            self.logger.info("Fetching listing page: %s", url)
+            resp = self._http.get(url, timeout=30)
+            if resp.status_code != 200:
+                self.logger.error("Listing page returned %s", resp.status_code)
+                break
+
+            items = self._parse_listing(resp.text, url)
+            for item in items:
+                yield item
+
+            url = self._next_listing_url(url, resp.text)
+            if url:
+                time.sleep(self._delay)
+
+    def _parse_listing(self, html, current_url):
+        data = self._parse_next_data(html)
         if not data:
             self.logger.warning("No __NEXT_DATA__ found on listing page")
-            return
+            return []
 
         props = data.get("props", {}).get("pageProps", {})
         ads = props.get("ads", [])
-        page_index = props.get("pageIndex", 1)
-        total_ads = props.get("totalOfAds", 0)
-        page_size = props.get("pageSize", 50)
-
-        if total_ads:
-            self.total_pages = (int(total_ads) + int(page_size) - 1) // int(page_size)
 
         for ad in ads:
             item = self._item_from_listing_data(ad)
             ad_url = ad.get("url")
             if ad_url:
-                yield scrapy.Request(
-                    ad_url,
-                    callback=self.parse_ad,
-                    cb_kwargs={"item": item},
-                )
-            else:
-                yield item
+                desc = self._fetch_description(ad_url)
+                if desc:
+                    item["description"] = desc
+            yield item
 
-        if self.total_pages and page_index < self.total_pages:
-            yield self._next_page_request(response.url, page_index)
+    def _next_listing_url(self, current_url, html):
+        data = self._parse_next_data(html)
+        if not data:
+            return None
+        props = data.get("props", {}).get("pageProps", {})
+        page_index = props.get("pageIndex", 1)
+        total_ads = props.get("totalOfAds", 0)
+        page_size = props.get("pageSize", 50)
+        if not total_ads:
+            return None
+        total_pages = (int(total_ads) + int(page_size) - 1) // int(page_size)
+        if page_index >= total_pages:
+            return None
+        parsed = urlparse(current_url)
+        qs = parse_qs(parsed.query, keep_blank_values=True)
+        qs["o"] = [str(page_index + 1)]
+        return urlunparse(parsed._replace(query=urlencode(qs, doseq=True)))
 
-    def parse_ad(self, response, item):
-        desc = self._get_description(response)
-        if desc:
-            item["description"] = desc
-        yield item
+    def _fetch_description(self, ad_url):
+        self.logger.info("Fetching ad detail: %s", ad_url)
+        time.sleep(self._delay)
+        try:
+            resp = self._http.get(ad_url, timeout=30)
+            if resp.status_code != 200:
+                return None
+            return self._get_description(resp.text)
+        except Exception as e:
+            self.logger.error("Failed to fetch ad %s: %s", ad_url, e)
+            return None
 
-    def _get_description(self, response):
-        data = self._parse_next_data(response)
+    def _get_description(self, html):
+        data = self._parse_next_data(html)
         if data:
             props = data.get("props", {}).get("pageProps", {})
             ad_data = props.get("ad") or props.get("listing") or {}
@@ -119,16 +153,18 @@ class OlxSpider(scrapy.Spider):
             if raw:
                 return raw.strip()
 
-        for sel in [
+        from parsel import Selector
+        sel = Selector(text=html)
+        for css_sel in [
             'meta[name="description"]::attr(content)',
             'meta[property="og:description"]::attr(content)',
         ]:
-            raw = response.css(sel).get()
+            raw = sel.css(css_sel).get()
             if raw:
                 cleaned = raw.replace("&lt;br&gt;", "\n").replace("<br>", "\n").replace("<br/>", "\n")
                 return cleaned.strip()
 
-        for script in response.css("script[type='application/ld+json']"):
+        for script in sel.css("script[type='application/ld+json']"):
             try:
                 obj = json.loads(script.css("::text").get())
                 desc = (
@@ -188,14 +224,6 @@ class OlxSpider(scrapy.Spider):
             listing_date=listing_date,
         )
 
-    def _next_page_request(self, current_url, current_page):
-        parsed = urlparse(current_url)
-        qs = parse_qs(parsed.query, keep_blank_values=True)
-        qs["o"] = [str(current_page + 1)]
-        new_query = urlencode(qs, doseq=True)
-        next_url = urlunparse(parsed._replace(query=new_query))
-        return scrapy.Request(next_url, callback=self.parse)
-
     def _parse_price(self, raw):
         m = re.search(r"[\d.]+", raw.replace(" ", ""))
         if m:
@@ -206,8 +234,10 @@ class OlxSpider(scrapy.Spider):
                 return None
         return None
 
-    def _parse_next_data(self, response):
-        text = response.css("script#__NEXT_DATA__::text").get()
+    def _parse_next_data(self, html):
+        from parsel import Selector
+        sel = Selector(text=html)
+        text = sel.css("script#__NEXT_DATA__::text").get()
         if text:
             try:
                 return json.loads(text)
