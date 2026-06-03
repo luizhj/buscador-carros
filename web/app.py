@@ -111,7 +111,7 @@ def index():
         elif sort == "km_asc":
             order = CarListing.mileage.asc().nullslast()
 
-        listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
+        listings = q.filter(CarListing.olx_id.isnot(None), ~CarListing.title.contains("*")).order_by(order).all()
         available_cities = (
             session.query(CarListing.city, func.count(CarListing.id))
             .filter(CarListing.city.isnot(None))
@@ -121,14 +121,14 @@ def index():
         )
         available_brands = (
             session.query(CarListing.brand, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None))
+            .filter(CarListing.brand.isnot(None), _no_star)
             .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
         )
         mq = (
             session.query(CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.model.isnot(None))
+            .filter(CarListing.model.isnot(None), _no_star)
         )
         if brands:
             mq = mq.filter(CarListing.brand.in_(brands))
@@ -151,23 +151,24 @@ def index():
         if no_nb_count:
             available_neighborhoods.append(("Sem bairro informado", "", no_nb_count))
 
+        _no_star = ~CarListing.title.contains("*")
         available_cartypes = (
             base_q.with_entities(CarListing.cartype, func.count(CarListing.id))
-            .filter(CarListing.cartype.isnot(None), CarListing.olx_id.isnot(None))
+            .filter(CarListing.cartype.isnot(None), CarListing.olx_id.isnot(None), _no_star)
             .group_by(CarListing.cartype)
             .order_by(CarListing.cartype)
             .all()
         )
         available_motorpowers = (
             base_q.with_entities(CarListing.motorpower, func.count(CarListing.id))
-            .filter(CarListing.motorpower.isnot(None), CarListing.olx_id.isnot(None))
+            .filter(CarListing.motorpower.isnot(None), CarListing.olx_id.isnot(None), _no_star)
             .group_by(CarListing.motorpower)
             .order_by(CarListing.motorpower)
             .all()
         )
         available_gearboxes = (
             base_q.with_entities(CarListing.transmission, func.count(CarListing.id))
-            .filter(CarListing.transmission.isnot(None), CarListing.olx_id.isnot(None))
+            .filter(CarListing.transmission.isnot(None), CarListing.olx_id.isnot(None), _no_star)
             .group_by(CarListing.transmission)
             .order_by(CarListing.transmission)
             .all()

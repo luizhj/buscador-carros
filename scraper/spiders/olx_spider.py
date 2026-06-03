@@ -120,6 +120,9 @@ class OlxSpider(scrapy.Spider):
         ads = props.get("ads", [])
 
         for ad in ads:
+            title = (ad.get("subject") or "")
+            if "*" in title:
+                continue
             item = self._item_from_listing_data(ad)
             yield item
 
@@ -172,7 +175,14 @@ class OlxSpider(scrapy.Spider):
         title = ad.get("subject", "").strip()
         parts = title.split()
         brand = props.get("vehicle_brand") or (parts[0] if parts else None)
-        model = parts[1] if len(parts) > 1 else None
+        model = None
+        if len(parts) > 1:
+            if len(parts) > 2 and parts[1] == "Grand" and parts[2] == "Siena":
+                model = "Grand Siena"
+            elif len(parts) > 2 and parts[1] == "C4" and parts[2] == "Lounge":
+                model = "C4 Lounge"
+            else:
+                model = parts[1]
 
         return CarItem(
             olx_id=str(ad.get("listId", "")),
