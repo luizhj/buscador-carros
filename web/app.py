@@ -80,18 +80,20 @@ def index():
             .all()
             if c[0]
         ]
-        available_brands = [
-            r[0]
-            for r in session.query(CarListing.brand)
-            .distinct()
+        available_brands = (
+            session.query(CarListing.brand, func.count(CarListing.id))
+            .filter(CarListing.brand.isnot(None))
+            .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
-            if r[0]
-        ]
-        mq = session.query(CarListing.model).distinct().filter(CarListing.model.isnot(None))
+        )
+        mq = (
+            session.query(CarListing.model, func.count(CarListing.id))
+            .filter(CarListing.model.isnot(None))
+        )
         if brands:
             mq = mq.filter(CarListing.brand.in_(brands))
-        available_models = [r[0] for r in mq.order_by(CarListing.model).all() if r[0]]
+        available_models = mq.group_by(CarListing.model).order_by(CarListing.model).all()
         return render_template(
             "index.html",
             listings=listings,

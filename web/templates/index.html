@@ -15,12 +15,12 @@
       <div class="card shadow-sm">
         <div class="card-header fw-bold">Marcas</div>
         <div class="card-body" style="max-height: 400px; overflow-y: auto;">
-          {% for brand in available_brands %}
+          {% for brand, count in available_brands %}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="brand" value="{{ brand }}"
               id="brand-{{ loop.index }}"
               {% if brand in selected_brands %}checked{% endif %}>
-            <label class="form-check-label" for="brand-{{ loop.index }}">{{ brand }}</label>
+            <label class="form-check-label" for="brand-{{ loop.index }}">{{ brand }} <span class="badge bg-secondary">{{ count }}</span></label>
           </div>
           {% endfor %}
         </div>
@@ -32,12 +32,12 @@
       <div class="card shadow-sm mt-2">
         <div class="card-header fw-bold">Modelos</div>
         <div class="card-body" style="max-height: 250px; overflow-y: auto;">
-          {% for model in available_models %}
+          {% for model, count in available_models %}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="model" value="{{ model }}"
               id="model-{{ loop.index }}"
               {% if model in selected_models %}checked{% endif %}>
-            <label class="form-check-label" for="model-{{ loop.index }}">{{ model }}</label>
+            <label class="form-check-label" for="model-{{ loop.index }}">{{ model }} <span class="badge bg-secondary">{{ count }}</span></label>
           </div>
           {% endfor %}
         </div>
