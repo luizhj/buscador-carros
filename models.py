@@ -19,6 +19,8 @@ class CarListing(Base):
     fuel = Column(String)
     transmission = Column(String)
     color = Column(String)
+    cartype = Column(String)
+    motorpower = Column(String)
     neighborhood = Column(String)
     zip_code = Column(String)
     seller_name = Column(String)

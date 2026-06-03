@@ -25,6 +25,8 @@ class CarItem(scrapy.Item):
     fuel = scrapy.Field()
     transmission = scrapy.Field()
     color = scrapy.Field()
+    cartype = scrapy.Field()
+    motorpower = scrapy.Field()
     neighborhood = scrapy.Field()
     zip_code = scrapy.Field()
     seller_name = scrapy.Field()
@@ -169,7 +171,7 @@ class OlxSpider(scrapy.Spider):
 
         title = ad.get("subject", "").strip()
         parts = title.split()
-        brand = parts[0] if parts else None
+        brand = props.get("vehicle_brand") or (parts[0] if parts else None)
         model = parts[1] if len(parts) > 1 else None
 
         return CarItem(
@@ -183,6 +185,8 @@ class OlxSpider(scrapy.Spider):
             fuel=props.get("fuel"),
             transmission=props.get("gearbox"),
             color=props.get("carcolor"),
+            cartype=props.get("cartype"),
+            motorpower=props.get("motorpower"),
             neighborhood=neighborhood,
             zip_code=props.get("cep"),
             seller_name=seller_name,
