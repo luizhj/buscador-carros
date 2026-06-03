@@ -65,6 +65,11 @@ def index():
             q = q.filter(CarListing.mileage <= km_max)
         if city := request.args.get("city"):
             q = q.filter(CarListing.city.ilike(f"%{city}%"))
+        brands = request.args.getlist("brand")
+        if brands:
+            q = q.filter(CarListing.brand.in_(brands))
+        if models := request.args.getlist("model"):
+            q = q.filter(CarListing.model.in_(models))
 
         listings = q.filter(CarListing.olx_id.isnot(None)).order_by(CarListing.created_at.desc()).all()
         cities = [
@@ -75,7 +80,27 @@ def index():
             .all()
             if c[0]
         ]
-        return render_template("index.html", listings=listings, cities=cities)
+        available_brands = [
+            r[0]
+            for r in session.query(CarListing.brand)
+            .distinct()
+            .order_by(CarListing.brand)
+            .all()
+            if r[0]
+        ]
+        mq = session.query(CarListing.model).distinct().filter(CarListing.model.isnot(None))
+        if brands:
+            mq = mq.filter(CarListing.brand.in_(brands))
+        available_models = [r[0] for r in mq.order_by(CarListing.model).all() if r[0]]
+        return render_template(
+            "index.html",
+            listings=listings,
+            cities=cities,
+            available_brands=available_brands,
+            selected_brands=brands,
+            available_models=available_models,
+            selected_models=request.args.getlist("model"),
+        )
     finally:
         session.close()
 
@@ -88,10 +113,26 @@ def marcas():
             session.query(CarListing.brand, func.count(CarListing.id))
             .filter(CarListing.brand.isnot(None))
             .group_by(CarListing.brand)
-            .order_by(func.count(CarListing.id).desc())
+            .order_by(CarListing.brand)
             .all()
         )
         return render_template("marcas.html", marcas=rows)
+    finally:
+        session.close()
+
+
+@app.route("/modelos")
+def todos_modelos():
+    session = get_session()
+    try:
+        rows = (
+            session.query(CarListing.brand, CarListing.model, func.count(CarListing.id))
+            .filter(CarListing.brand.isnot(None), CarListing.model.isnot(None))
+            .group_by(CarListing.brand, CarListing.model)
+            .order_by(CarListing.brand, CarListing.model)
+            .all()
+        )
+        return render_template("todos_modelos.html", modelos=rows)
     finally:
         session.close()
 
@@ -104,7 +145,7 @@ def modelos(brand):
             session.query(CarListing.model, func.count(CarListing.id))
             .filter(CarListing.brand == brand, CarListing.model.isnot(None))
             .group_by(CarListing.model)
-            .order_by(func.count(CarListing.id).desc())
+            .order_by(CarListing.model)
             .all()
         )
         return render_template("modelos.html", brand=brand, modelos=rows)
