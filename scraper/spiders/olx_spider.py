@@ -178,12 +178,21 @@ class OlxSpider(scrapy.Spider):
         brand = props.get("vehicle_brand") or (parts[0] if parts else None)
         model = None
         if len(parts) > 1:
-            if len(parts) > 2 and parts[1] == "Grand" and parts[2] == "Siena":
-                model = "Grand Siena"
-            elif len(parts) > 2 and parts[1] == "C4" and parts[2] == "Lounge":
-                model = "C4 Lounge"
-            else:
-                model = parts[1]
+            # descobre onde começa o modelo (pula palavras extras da marca)
+            idx = 1
+            if parts[0] != brand and len(parts) > 2:
+                idx = 2
+            _suffixes = {"motors", "do", "das", "dos", "da"}
+            while idx < len(parts) and parts[idx].lower() in _suffixes:
+                idx += 1
+            if idx < len(parts):
+                raw = parts[idx:]
+                if len(raw) > 1 and raw[0] == "Grand" and raw[1] == "Siena":
+                    model = "Grand Siena"
+                elif len(raw) > 1 and raw[0] == "C4" and raw[1] == "Lounge":
+                    model = "C4 Lounge"
+                else:
+                    model = raw[0]
 
         return CarItem(
             olx_id=str(ad.get("listId", "")),
