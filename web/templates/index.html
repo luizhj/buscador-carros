@@ -114,6 +114,20 @@
           {% endfor %}
         </div>
       </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#year-collapse" aria-expanded="true">
+          Ano <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="year-collapse" style="max-height: 300px; overflow-y: auto;">
+          {% for yr, count in available_years %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="year_filter" value="{{ yr }}" id="yr-{{ loop.index }}"
+              {% if yr in selected_years %}checked{% endif %}>
+            <label class="form-check-label" for="yr-{{ loop.index }}">{{ yr }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
       <div class="mt-2">
         <a href="/marcas" class="btn btn-outline-info btn-sm w-100">Marcas</a>
         <a href="/modelos" class="btn btn-outline-info btn-sm w-100 mt-1">Todos os modelos</a>

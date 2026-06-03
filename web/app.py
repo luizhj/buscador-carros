@@ -86,17 +86,21 @@ def index():
                 )
             else:
                 q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
-        # base query sem os filtros de cartype/motorpower/gearbox para calcular available_*
+        # base query sem filtros de si-próprio para calcular available_*
         base_q = q
         cartype_filter = request.args.getlist("cartype_filter")
         motorpower_filter = request.args.getlist("motorpower_filter")
         gearbox_filter = request.args.getlist("gearbox_filter")
+        year_filter = request.args.getlist("year_filter")
         if cartype_filter:
             q = q.filter(CarListing.cartype.in_(cartype_filter))
         if motorpower_filter:
             q = q.filter(CarListing.motorpower.in_(motorpower_filter))
         if gearbox_filter:
             q = q.filter(CarListing.transmission.in_(gearbox_filter))
+        year_filter = [int(y) for y in year_filter if y.isdigit()]
+        if year_filter:
+            q = q.filter(CarListing.year.in_(year_filter))
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -172,6 +176,13 @@ def index():
             .order_by(CarListing.transmission)
             .all()
         )
+        available_years = (
+            base_q.with_entities(CarListing.year, func.count(CarListing.id))
+            .filter(CarListing.year.isnot(None), CarListing.olx_id.isnot(None))
+            .group_by(CarListing.year)
+            .order_by(CarListing.year.desc())
+            .all()
+        )
         return render_template(
             "index.html",
             listings=listings,
@@ -187,9 +198,11 @@ def index():
             available_cartypes=_sort_selected_first(available_cartypes, cartype_filter),
             available_motorpowers=_sort_selected_first(available_motorpowers, motorpower_filter),
             available_gearboxes=_sort_selected_first(available_gearboxes, gearbox_filter),
+            available_years=_sort_selected_first(available_years, year_filter),
             selected_cartypes=cartype_filter,
             selected_motorpowers=motorpower_filter,
             selected_gearboxes=gearbox_filter,
+            selected_years=year_filter,
             sort=sort,
         )
     finally:
