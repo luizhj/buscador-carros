@@ -325,12 +325,13 @@ def scraping_page():
 
 @app.route("/scrape-log")
 def scrape_log():
-    try:
-        with open(LOG_FILE) as f:
-            content = f.read()
-    except FileNotFoundError:
-        content = ""
-    return Response(content, mimetype="text/plain")
+    if not os.path.exists(LOG_FILE):
+        return Response("Aguardando scraper iniciar...\n", mimetype="text/plain")
+    with open(LOG_FILE) as f:
+        content = f.read()
+    if not content.strip():
+        return Response("Aguardando scraper iniciar...\n", mimetype="text/plain")
+    return Response(content, mimetype="text/plain", headers={"Cache-Control": "no-cache"})
 
 
 if __name__ == "__main__":
