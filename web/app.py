@@ -2,9 +2,7 @@ import os
 import sys
 import json
 import subprocess
-import threading
-import queue
-from flask import Flask, render_template, request, Response, redirect, stream_with_context, url_for
+from flask import Flask, render_template, request, Response, redirect, url_for
 import urllib.request
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -285,13 +283,11 @@ def run_scrape():
     if not url:
         return redirect(url_for("config_page"))
 
-    # salva URL no config.py
+    # salva URL no config.py e limpa banco
     cfg_path = os.path.join(_project_root, "config.py")
     with open(cfg_path, "w") as f:
         f.write(f'START_URL = {json.dumps(url)}\n')
         f.write("START_PAGE = 1\n")
-
-    # limpa banco
     from clear_db import clear_db
     removed = clear_db()
 
@@ -301,19 +297,19 @@ def run_scrape():
         yield "data: Iniciando scraper...\n\n"
 
         proc = subprocess.Popen(
-            [sys.executable, os.path.join(_project_root, "run_scraper.py")],
+            [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, cwd=_project_root,
+            bufsize=0, text=True, cwd=_project_root,
         )
-        for line in proc.stdout:
+        for line in iter(proc.stdout.readline, ""):
             yield f"data: {line.rstrip()}\n\n"
         proc.wait()
         yield "data: Scraper concluído!\n\n"
 
     return Response(
-        stream_with_context(generate()),
+        generate(),
         mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache"},
     )
 
 

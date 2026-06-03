@@ -18,7 +18,7 @@
           <label class="form-label fw-bold">URL de pesquisa (OLX)</label>
           <input type="url" name="url" class="form-control" value="{{ current_url }}" required>
         </div>
-        <button type="submit" class="btn btn-primary">Salvar e Scrapar</button>
+        <button type="submit" class="btn btn-primary">Salvar e Atualizar</button>
       </form>
     </div>
   </div>
@@ -36,7 +36,7 @@ document.getElementById('config-form').onsubmit = async function(e) {
   e.preventDefault();
   const btn = this.querySelector('button');
   btn.disabled = true;
-  btn.textContent = 'Scrapando...';
+  btn.textContent = 'Atualizando...';
 
   const logCard = document.getElementById('log-card');
   const logEl = document.getElementById('log');
@@ -56,7 +56,7 @@ document.getElementById('config-form').onsubmit = async function(e) {
   }
 
   btn.disabled = false;
-  btn.textContent = 'Salvar e Scrapar';
+  btn.textContent = 'Salvar e Atualizar';
   logEl.textContent += '\n✓ Scraper concluído!';
 };
 </script>
