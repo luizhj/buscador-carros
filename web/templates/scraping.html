@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scraping — Carros OLX</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h1 class="mb-4">Atualizando...</h1>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <pre id="log" style="max-height: 600px; overflow-y: auto; font-size:0.85em; margin:0;"></pre>
+    </div>
+  </div>
+  <div class="mt-3" id="done" style="display:none;">
+    <a href="/" class="btn btn-primary">Ver resultados</a>
+  </div>
+</div>
+<script>
+const logEl = document.getElementById('log');
+const doneEl = document.getElementById('done');
+let lastLen = 0;
+
+async function poll() {
+  const resp = await fetch('/scrape-log');
+  const text = await resp.text();
+  if (text.length > lastLen) {
+    logEl.textContent = text;
+    logEl.scrollTop = logEl.scrollHeight;
+    lastLen = text.length;
+  }
+  if (text.includes('Done!')) {
+    doneEl.style.display = 'block';
+  } else {
+    setTimeout(poll, 1000);
+  }
+}
+poll();
+</script>
+</body>
+</html>

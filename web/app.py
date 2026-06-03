@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import subprocess
+import threading
 from flask import Flask, render_template, request, Response, redirect, url_for
 import urllib.request
 
@@ -273,8 +274,39 @@ def delete_listing(listing_id):
 
 @app.route("/config")
 def config_page():
-    from config import START_URL
-    return render_template("config.html", current_url=START_URL)
+    try:
+        with open(CURRENT_URL_FILE) as f:
+            url = f.read().strip()
+    except FileNotFoundError:
+        from config import START_URL
+        url = START_URL
+    return render_template("config.html", current_url=url)
+
+
+LOG_FILE = os.path.join(_project_root, "scrape.log")
+
+
+CURRENT_URL_FILE = os.path.join(_project_root, ".current_url")
+
+
+def _run_scraper_background(url):
+    """Roda o scraper em background escrevendo log em arquivo."""
+    from clear_db import clear_db
+    removed = clear_db()
+    with open(CURRENT_URL_FILE, "w") as f:
+        f.write(url)
+    with open(LOG_FILE, "w") as f:
+        f.write(f"URL: {url}\n")
+        f.write(f"Banco limpo ({removed} registros removidos)\n\n")
+        f.flush()
+    env = {**os.environ, "SCRAPE_URL": url}
+    with open(LOG_FILE, "a") as f:
+        proc = subprocess.Popen(
+            [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],
+            stdout=f, stderr=subprocess.STDOUT,
+            text=True, cwd=_project_root, env=env,
+        )
+        proc.wait()
 
 
 @app.route("/run-scrape", methods=["POST"])
@@ -282,35 +314,23 @@ def run_scrape():
     url = request.form.get("url", "").strip()
     if not url:
         return redirect(url_for("config_page"))
+    threading.Thread(target=_run_scraper_background, args=(url,), daemon=True).start()
+    return redirect(url_for("scraping_page"))
 
-    # salva URL no config.py e limpa banco
-    cfg_path = os.path.join(_project_root, "config.py")
-    with open(cfg_path, "w") as f:
-        f.write(f'START_URL = {json.dumps(url)}\n')
-        f.write("START_PAGE = 1\n")
-    from clear_db import clear_db
-    removed = clear_db()
 
-    def generate():
-        yield f"data: URL salva: {url}\n\n"
-        yield f"data: Banco limpo ({removed} registros removidos)\n\n"
-        yield "data: Iniciando scraper...\n\n"
+@app.route("/scraping")
+def scraping_page():
+    return render_template("scraping.html")
 
-        proc = subprocess.Popen(
-            [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            bufsize=0, text=True, cwd=_project_root,
-        )
-        for line in iter(proc.stdout.readline, ""):
-            yield f"data: {line.rstrip()}\n\n"
-        proc.wait()
-        yield "data: Scraper concluído!\n\n"
 
-    return Response(
-        generate(),
-        mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache"},
-    )
+@app.route("/scrape-log")
+def scrape_log():
+    try:
+        with open(LOG_FILE) as f:
+            content = f.read()
+    except FileNotFoundError:
+        content = ""
+    return Response(content, mimetype="text/plain")
 
 
 if __name__ == "__main__":
