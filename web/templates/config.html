@@ -11,9 +11,9 @@
   <h1 class="mb-4">Configurar Pesquisa</h1>
   <a href="/" class="btn btn-outline-secondary mb-2">&larr; Voltar para listagem</a>
 
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm">
     <div class="card-body">
-      <form id="config-form">
+      <form method="POST" action="/run-scrape">
         <div class="mb-3">
           <label class="form-label fw-bold">URL de pesquisa (OLX)</label>
           <input type="url" name="url" class="form-control" value="{{ current_url }}" required>
@@ -22,43 +22,6 @@
       </form>
     </div>
   </div>
-
-  <div class="card shadow-sm" id="log-card" style="display:none;">
-    <div class="card-header fw-bold">Log do Scraper</div>
-    <div class="card-body">
-      <pre id="log" style="max-height: 500px; overflow-y: auto; font-size:0.85em; margin:0;"></pre>
-    </div>
-  </div>
 </div>
-
-<script>
-document.getElementById('config-form').onsubmit = async function(e) {
-  e.preventDefault();
-  const btn = this.querySelector('button');
-  btn.disabled = true;
-  btn.textContent = 'Atualizando...';
-
-  const logCard = document.getElementById('log-card');
-  const logEl = document.getElementById('log');
-  logCard.style.display = 'block';
-  logEl.textContent = '';
-
-  const formData = new FormData(this);
-  const resp = await fetch('/run-scrape', { method: 'POST', body: formData });
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    logEl.textContent += decoder.decode(value);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Salvar e Atualizar';
-  logEl.textContent += '\n✓ Scraper concluído!';
-};
-</script>
 </body>
 </html>
