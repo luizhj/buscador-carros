@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-from flask import Flask, render_template, request, Response
+from flask import Flask, render_template, request, Response, redirect
 import urllib.request
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -70,6 +70,15 @@ def index():
             q = q.filter(CarListing.brand.in_(brands))
         if models := request.args.getlist("model"):
             q = q.filter(CarListing.model.in_(models))
+        if city_check := request.args.getlist("city_check"):
+            q = q.filter(CarListing.city.in_(city_check))
+        if neighborhood_check := request.args.getlist("neighborhood_check"):
+            if "Sem bairro informado" in neighborhood_check:
+                q = q.filter(
+                    CarListing.neighborhood.is_(None) | CarListing.neighborhood.in_([n for n in neighborhood_check if n != "Sem bairro informado"])
+                )
+            else:
+                q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -85,14 +94,13 @@ def index():
             order = CarListing.mileage.asc().nullslast()
 
         listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
-        cities = [
-            c[0]
-            for c in session.query(CarListing.city)
-            .distinct()
+        available_cities = (
+            session.query(CarListing.city, func.count(CarListing.id))
+            .filter(CarListing.city.isnot(None))
+            .group_by(CarListing.city)
             .order_by(CarListing.city)
             .all()
-            if c[0]
-        ]
+        )
         available_brands = (
             session.query(CarListing.brand, func.count(CarListing.id))
             .filter(CarListing.brand.isnot(None))
@@ -107,14 +115,35 @@ def index():
         if brands:
             mq = mq.filter(CarListing.brand.in_(brands))
         available_models = mq.group_by(CarListing.model).order_by(CarListing.model).all()
+        nq = (
+            session.query(CarListing.neighborhood, CarListing.city, func.count(CarListing.id))
+            .filter(CarListing.city.isnot(None))
+        )
+        if city_check:
+            nq = nq.filter(CarListing.city.in_(city_check))
+        raw_neighborhoods = nq.group_by(CarListing.neighborhood, CarListing.city).order_by(CarListing.neighborhood).all()
+        no_nb_count = (
+            session.query(func.count(CarListing.id))
+            .filter(CarListing.neighborhood.is_(None), CarListing.city.isnot(None))
+        )
+        if city_check:
+            no_nb_count = no_nb_count.filter(CarListing.city.in_(city_check))
+        no_nb_count = no_nb_count.scalar()
+        available_neighborhoods = [(n, c, cnt) for n, c, cnt in raw_neighborhoods if n is not None]
+        if no_nb_count:
+            available_neighborhoods.append(("Sem bairro informado", "", no_nb_count))
         return render_template(
             "index.html",
             listings=listings,
-            cities=cities,
+            cities=[c for c, _ in available_cities],
+            available_cities=available_cities,
             available_brands=available_brands,
             selected_brands=brands,
             available_models=available_models,
             selected_models=request.args.getlist("model"),
+            selected_cities=request.args.getlist("city_check"),
+            available_neighborhoods=available_neighborhoods,
+            selected_neighborhoods=request.args.getlist("neighborhood_check"),
             sort=sort,
         )
     finally:
@@ -167,6 +196,19 @@ def modelos(brand):
         return render_template("modelos.html", brand=brand, modelos=rows)
     finally:
         session.close()
+
+
+@app.route("/delete/<int:listing_id>")
+def delete_listing(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing:
+            session.delete(listing)
+            session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/")
 
 
 if __name__ == "__main__":

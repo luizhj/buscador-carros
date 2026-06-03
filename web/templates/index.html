@@ -42,6 +42,36 @@
           {% endfor %}
         </div>
       </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#cities-collapse" aria-expanded="true">
+          Cidades <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="cities-collapse" style="max-height: 300px; overflow-y: auto;">
+          {% for city, count in available_cities %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="city_check" value="{{ city }}"
+              id="city-{{ loop.index }}"
+              {% if city in selected_cities %}checked{% endif %}>
+            <label class="form-check-label" for="city-{{ loop.index }}">{{ city }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#neighborhoods-collapse" aria-expanded="true">
+          Bairros <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="neighborhoods-collapse" style="max-height: 300px; overflow-y: auto;">
+          {% for neighborhood, city, count in available_neighborhoods %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="neighborhood_check" value="{{ neighborhood }}"
+              id="nb-{{ loop.index }}"
+              {% if neighborhood in selected_neighborhoods %}checked{% endif %}>
+            <label class="form-check-label" for="nb-{{ loop.index }}">{{ neighborhood }}{% if city %} ({{ city }}){% endif %} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
       <div class="mt-2">
         <a href="/marcas" class="btn btn-outline-info btn-sm w-100">Marcas</a>
         <a href="/modelos" class="btn btn-outline-info btn-sm w-100 mt-1">Todos os modelos</a>
@@ -51,7 +81,7 @@
     <div class="col-md-9">
       <div class="mb-3 p-3 bg-white rounded shadow-sm">
         <div class="row g-2">
-          <div class="col-md-2">
+          <div class="col-md-3">
             <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q', '') }}">
           </div>
           <div class="col-md-2">
@@ -68,14 +98,6 @@
           </div>
           <div class="col-md-1">
             <input name="km_max" class="form-control" placeholder="KM máx" value="{{ request.args.get('km_max', '') }}">
-          </div>
-          <div class="col-md-2">
-            <select name="city" class="form-select">
-              <option value="">Todas cidades</option>
-              {% for c in cities %}
-              <option value="{{ c }}" {% if request.args.get('city') == c %}selected{% endif %}>{{ c }}</option>
-              {% endfor %}
-            </select>
           </div>
         </div>
         <div class="row mt-2">
@@ -109,6 +131,7 @@
               <th style="width:10%">KM</th>
               <th style="width:15%">Cidade</th>
               <th style="width:5%">Link</th>
+              <th style="width:5%">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -126,6 +149,7 @@
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
               <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
+              <td><a href="/delete/{{ ad.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Excluir este anúncio?')">Excluir</a></td>
             </tr>
             {% endfor %}
           </tbody>
