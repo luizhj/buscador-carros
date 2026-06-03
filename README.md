@@ -18,13 +18,32 @@ Scraper de anúncios de carros da OLX + interface web para visualização com fi
 
 Python 3, Scrapy, Flask, SQLAlchemy, SQLite, Bootstrap 5, cloudscraper
 
+## Pré-requisitos
+
+- **Python 3.9+** instalado
+- **pip** e **venv** (geralmente inclusos no Python)
+
+  No Windows, marque "Add Python to PATH" durante a instalação.
+  No Linux, instale com: `sudo apt install python3 python3-pip python3-venv`
+
 ## Como usar
+
+### Linux / macOS
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python run_scraper.py    # baixa os anúncios
 .venv/bin/python web/app.py        # inicia o servidor em http://localhost:5000
+```
+
+### Windows (PowerShell)
+
+```powershell
+python -m venv .venv
+.venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\python run_scraper.py
+.venv\Scripts\python web\app.py
 ```
 
 Ou via interface web: `http://localhost:5000/config` — cole a URL de pesquisa da OLX e clique em "Salvar e Atualizar".
