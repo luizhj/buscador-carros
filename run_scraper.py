@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Run the OLX car scraper and save listings to SQLite."""
+"""Run the OLX car scraper and save listings to SQLite.
+
+The spider uses cloudscraper (not Scrapy's async engine) to bypass
+Cloudflare. So we iterate start_requests() directly instead of
+using CrawlerProcess.
+"""
 from scraper.spiders.olx_spider import OlxSpider, DatabasePipeline
 from models import init_db
 

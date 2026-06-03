@@ -38,7 +38,7 @@ def index():
         if city := request.args.get("city"):
             q = q.filter(CarListing.city.ilike(f"%{city}%"))
 
-        listings = q.order_by(CarListing.created_at.desc()).all()
+        listings = q.filter(CarListing.olx_id.isnot(None)).order_by(CarListing.created_at.desc()).all()
         cities = [
             c[0]
             for c in session.query(CarListing.city)

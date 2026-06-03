@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timezone
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 
-import cloudscraper
+import cloudscraper  # bypasses Cloudflare (Scrapy's Twisted client is blocked)
 import scrapy
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -62,6 +62,14 @@ class DatabasePipeline:
 
 
 class OlxSpider(scrapy.Spider):
+    """OLX car listings spider.
+
+    Uses cloudscraper instead of Scrapy's async HTTP client because OLX
+    uses Cloudflare protection that blocks Scrapy's Twisted-based engine.
+    The spider is a generator-based design (start_requests yields items
+    synchronously), so it runs outside Scrapy's CrawlerProcess.
+    Use run_scraper.py to execute.
+    """
     name = "olx"
     custom_settings = {
         "ITEM_PIPELINES": {"scraper.spiders.olx_spider.DatabasePipeline": 300},

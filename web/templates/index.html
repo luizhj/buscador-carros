@@ -66,7 +66,7 @@
             {% endif %}
           </td>
           <td>{{ ad.title }}</td>
-          <td>R$ {{ "%.2f"|format(ad.price / 100) }}</td>
+          <td>{% if ad.price %}R$ {{ "%.2f"|format(ad.price / 100) }}{% else %}-{% endif %}</td>
           <td>{{ ad.year }}</td>
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
           <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
