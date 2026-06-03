@@ -36,6 +36,13 @@ def img_proxy():
     return Response(resp.read(), content_type=resp.headers.get("Content-Type", "image/jpeg"))
 
 
+def _sort_selected_first(items, selected):
+    selected_set = set(selected)
+    if items and isinstance(items[0], tuple) and len(items[0]) == 3:
+        return sorted(items, key=lambda x: (0 if x[0] in selected_set else 1, x[0] or ""))
+    return sorted(items, key=lambda x: (0 if x[0] in selected_set else 1, x[0] or ""))
+
+
 def _int_or_none(val):
     if val is None:
         return None
@@ -79,11 +86,16 @@ def index():
                 )
             else:
                 q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
-        if cartype_filter := request.args.getlist("cartype_filter"):
+        # base query sem os filtros de cartype/motorpower/gearbox para calcular available_*
+        base_q = q
+        cartype_filter = request.args.getlist("cartype_filter")
+        motorpower_filter = request.args.getlist("motorpower_filter")
+        gearbox_filter = request.args.getlist("gearbox_filter")
+        if cartype_filter:
             q = q.filter(CarListing.cartype.in_(cartype_filter))
-        if motorpower_filter := request.args.getlist("motorpower_filter"):
+        if motorpower_filter:
             q = q.filter(CarListing.motorpower.in_(motorpower_filter))
-        if gearbox_filter := request.args.getlist("gearbox_filter"):
+        if gearbox_filter:
             q = q.filter(CarListing.transmission.in_(gearbox_filter))
 
         sort = request.args.get("sort", "")
@@ -139,23 +151,22 @@ def index():
         if no_nb_count:
             available_neighborhoods.append(("Sem bairro informado", "", no_nb_count))
 
-        filtered_q = q  # base for filter-dependent queries
         available_cartypes = (
-            filtered_q.with_entities(CarListing.cartype, func.count(CarListing.id))
+            base_q.with_entities(CarListing.cartype, func.count(CarListing.id))
             .filter(CarListing.cartype.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.cartype)
             .order_by(CarListing.cartype)
             .all()
         )
         available_motorpowers = (
-            filtered_q.with_entities(CarListing.motorpower, func.count(CarListing.id))
+            base_q.with_entities(CarListing.motorpower, func.count(CarListing.id))
             .filter(CarListing.motorpower.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.motorpower)
             .order_by(CarListing.motorpower)
             .all()
         )
         available_gearboxes = (
-            filtered_q.with_entities(CarListing.transmission, func.count(CarListing.id))
+            base_q.with_entities(CarListing.transmission, func.count(CarListing.id))
             .filter(CarListing.transmission.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.transmission)
             .order_by(CarListing.transmission)
@@ -165,20 +176,20 @@ def index():
             "index.html",
             listings=listings,
             cities=[c for c, _ in available_cities],
-            available_cities=available_cities,
-            available_brands=available_brands,
+            available_cities=_sort_selected_first(available_cities, request.args.getlist("city_check")),
+            available_brands=_sort_selected_first(available_brands, brands),
             selected_brands=brands,
-            available_models=available_models,
+            available_models=_sort_selected_first(available_models, request.args.getlist("model")),
             selected_models=request.args.getlist("model"),
             selected_cities=request.args.getlist("city_check"),
-            available_neighborhoods=available_neighborhoods,
+            available_neighborhoods=_sort_selected_first(available_neighborhoods, request.args.getlist("neighborhood_check")),
             selected_neighborhoods=request.args.getlist("neighborhood_check"),
-            available_cartypes=available_cartypes,
-            available_motorpowers=available_motorpowers,
-            available_gearboxes=available_gearboxes,
-            selected_cartypes=request.args.getlist("cartype_filter"),
-            selected_motorpowers=request.args.getlist("motorpower_filter"),
-            selected_gearboxes=request.args.getlist("gearbox_filter"),
+            available_cartypes=_sort_selected_first(available_cartypes, cartype_filter),
+            available_motorpowers=_sort_selected_first(available_motorpowers, motorpower_filter),
+            available_gearboxes=_sort_selected_first(available_gearboxes, gearbox_filter),
+            selected_cartypes=cartype_filter,
+            selected_motorpowers=motorpower_filter,
+            selected_gearboxes=gearbox_filter,
             sort=sort,
         )
     finally:
