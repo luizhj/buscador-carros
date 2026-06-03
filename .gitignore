@@ -4,3 +4,4 @@ __pycache__/
 car_listings.db
 *.db
 .venv/
+venv/
