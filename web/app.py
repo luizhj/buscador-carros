@@ -8,6 +8,7 @@ _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
+from sqlalchemy import func
 from models import CarListing, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
@@ -75,6 +76,38 @@ def index():
             if c[0]
         ]
         return render_template("index.html", listings=listings, cities=cities)
+    finally:
+        session.close()
+
+
+@app.route("/marcas")
+def marcas():
+    session = get_session()
+    try:
+        rows = (
+            session.query(CarListing.brand, func.count(CarListing.id))
+            .filter(CarListing.brand.isnot(None))
+            .group_by(CarListing.brand)
+            .order_by(func.count(CarListing.id).desc())
+            .all()
+        )
+        return render_template("marcas.html", marcas=rows)
+    finally:
+        session.close()
+
+
+@app.route("/marcas/<brand>")
+def modelos(brand):
+    session = get_session()
+    try:
+        rows = (
+            session.query(CarListing.model, func.count(CarListing.id))
+            .filter(CarListing.brand == brand, CarListing.model.isnot(None))
+            .group_by(CarListing.model)
+            .order_by(func.count(CarListing.id).desc())
+            .all()
+        )
+        return render_template("modelos.html", brand=brand, modelos=rows)
     finally:
         session.close()
 

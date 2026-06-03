@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marcas — Carros OLX</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h1 class="mb-4">Marcas</h1>
+  <a href="/" class="btn btn-outline-secondary mb-4">&larr; Voltar para listagem</a>
+  <div class="row g-3">
+    {% for brand, count in marcas %}
+    <div class="col-md-4 col-lg-3">
+      <a href="/marcas/{{ brand }}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title">{{ brand }}</h5>
+            <span class="badge bg-primary">{{ count }} anúncio{{ 's' if count != 1 }}</span>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

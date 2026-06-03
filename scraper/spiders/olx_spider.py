@@ -28,6 +28,8 @@ class CarItem(scrapy.Item):
     neighborhood = scrapy.Field()
     zip_code = scrapy.Field()
     seller_name = scrapy.Field()
+    brand = scrapy.Field()
+    model = scrapy.Field()
     city = scrapy.Field()
     state = scrapy.Field()
     description = scrapy.Field()
@@ -215,9 +217,16 @@ class OlxSpider(scrapy.Spider):
         state = loc.get("uf")
         neighborhood = loc.get("neighbourhood")
 
+        title = ad.get("subject", "").strip()
+        parts = title.split()
+        brand = parts[0] if parts else None
+        model = parts[1] if len(parts) > 1 else None
+
         return CarItem(
             olx_id=str(ad.get("listId", "")),
-            title=ad.get("subject", "").strip(),
+            title=title,
+            brand=brand,
+            model=model,
             price=price,
             year=self._int(props.get("regdate")),
             mileage=self._int(props.get("mileage")),

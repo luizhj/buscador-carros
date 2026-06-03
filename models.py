@@ -22,6 +22,8 @@ class CarListing(Base):
     neighborhood = Column(String)
     zip_code = Column(String)
     seller_name = Column(String)
+    brand = Column(String)
+    model = Column(String)
     city = Column(String)
     state = Column(String)
     description = Column(Text)
