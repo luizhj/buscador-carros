@@ -345,6 +345,18 @@ def _run_scraper_background(url):
         proc.wait()
 
 
+@app.route("/clear-all", methods=["POST"])
+def clear_all():
+    session = get_session()
+    try:
+        ca = session.query(CarListing).delete()
+        ig = session.query(IgnoredListing).delete()
+        session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("config_page"))
+
+
 @app.route("/run-scrape", methods=["POST"])
 def run_scrape():
     url = request.form.get("url", "").strip()

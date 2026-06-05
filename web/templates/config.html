@@ -22,6 +22,16 @@
       </form>
     </div>
   </div>
+
+  <div class="card shadow-sm mt-4 border-danger">
+    <div class="card-header fw-bold text-danger">Zona de Perigo</div>
+    <div class="card-body">
+      <p class="text-muted small">Remove todos os anúncios baixados e a lista de ignorados.</p>
+      <form method="POST" action="/clear-all" onsubmit="return confirm('Tem certeza? Todos os anúncios e ignorados serão removidos permanentemente.')">
+        <button type="submit" class="btn btn-danger">Limpar tudo</button>
+      </form>
+    </div>
+  </div>
 </div>
 </body>
 </html>
