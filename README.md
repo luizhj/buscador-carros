@@ -12,7 +12,11 @@ Scraper de anúncios de carros da OLX + interface web para visualização com fi
 - Botão "Marcar todos" em cada filtro
 - Página de configuração para definir URL de pesquisa e executar o scraper
 - Imagens exibidas via proxy (contorna bloqueio de hotlinking)
-- Exclusão manual de anúncios
+- **Ignorar anúncios** — oculta anúncios da listagem e filtros; página dedicada para gerenciar e restaurar
+- **Favoritar anúncios** — marca com ♥ para acesso rápido; página dedicada com todos os favoritos
+- **Modelos compostos** — reconhece nomes de modelo com duas palavras (Grand Siena, C4 Lounge, etc.) via JSON editável pela interface web
+- **Exportar/Importar banco** — backup completo (.zip) do banco, configurações e modelos compostos
+- Ignora anúncios com palavras-chave no título (*, retirada de peça, entrada, parcelas, sucata)
 
 ## Stack
 
