@@ -16,6 +16,15 @@ if _project_root not in sys.path:
 from config import START_URL, START_PAGE
 from models import CarListing, IgnoredListing, get_session, init_db
 
+
+def _compound_models():
+    path = os.path.join(_project_root, "models_compostos.json")
+    try:
+        with open(path) as f:
+            return {(e["first"], e["second"]): e["model"] for e in json.load(f)}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
 class CarItem(scrapy.Item):
     olx_id = scrapy.Field()
     title = scrapy.Field()
@@ -189,20 +198,9 @@ class OlxSpider(scrapy.Spider):
                 idx += 1
             if idx < len(parts):
                 raw = parts[idx:]
-                if len(raw) > 1 and raw[0] == "Grand" and raw[1] == "Siena":
-                    model = "Grand Siena"
-                elif len(raw) > 1 and raw[0] == "Grand" and raw[1] == "Vitara":
-                    model = "Grand Vitara"
-                elif len(raw) > 1 and raw[0] == "C4" and raw[1] == "Lounge":
-                    model = "C4 Lounge"
-                elif len(raw) > 1 and raw[0] == "Santa" and raw[1] == "Fe":
-                    model = "Santa Fe"
-                elif len(raw) > 1 and raw[0] == "Classe" and raw[1] in ("A", "B"):
-                    model = f"Classe {raw[1]}"
-                elif len(raw) > 1 and raw[0] == "New" and raw[1] == "Beetle":
-                    model = "New Beetle"
-                elif len(raw) > 1 and raw[0] == "XC" and raw[1] == "60":
-                    model = "XC 60"
+                compound = _compound_models()
+                if len(raw) > 1 and (raw[0], raw[1]) in compound:
+                    model = compound[(raw[0], raw[1])]
                 else:
                     model = raw[0]
 

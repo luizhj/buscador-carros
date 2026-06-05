@@ -1,0 +1,42 @@
+[
+  {
+    "first": "Grand",
+    "model": "Grand Siena",
+    "second": "Siena"
+  },
+  {
+    "first": "Grand",
+    "model": "Grand Vitara",
+    "second": "Vitara"
+  },
+  {
+    "first": "C4",
+    "model": "C4 Lounge",
+    "second": "Lounge"
+  },
+  {
+    "first": "Santa",
+    "model": "Santa Fe",
+    "second": "Fe"
+  },
+  {
+    "first": "Classe",
+    "model": "Classe A",
+    "second": "A"
+  },
+  {
+    "first": "Classe",
+    "model": "Classe B",
+    "second": "B"
+  },
+  {
+    "first": "New",
+    "model": "New Beetle",
+    "second": "Beetle"
+  },
+  {
+    "first": "XC",
+    "model": "XC 60",
+    "second": "60"
+  }
+]

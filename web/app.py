@@ -326,6 +326,30 @@ def restore_listing(olx_id):
     return redirect(request.referrer or "/")
 
 
+COMPOUND_PATH = os.path.join(_project_root, "models_compostos.json")
+
+
+@app.route("/modelos-compostos")
+def modelos_compostos():
+    try:
+        with open(COMPOUND_PATH) as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+    return render_template("modelos_compostos.html", modelos=data)
+
+
+@app.route("/modelos-compostos/save", methods=["POST"])
+def save_compounds():
+    data = request.get_json()
+    if data is None:
+        return ("JSON inválido", 400)
+    with open(COMPOUND_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    return ("", 200)
+
+
 @app.route("/config")
 def config_page():
     try:

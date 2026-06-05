@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelos Compostos — Carros OLX</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <h1 class="mb-4">Modelos Compostos</h1>
+  <a href="/" class="btn btn-outline-secondary mb-2">&larr; Voltar para listagem</a>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <p class="text-muted">Modelos com duas palavras que o scraper deve reconhecer (ex: "Grand Siena", "C4 Lounge").</p>
+      <table class="table table-sm" id="tabela">
+        <thead>
+          <tr>
+            <th>Palavra 1</th>
+            <th>Palavra 2</th>
+            <th>Modelo extraído</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in modelos %}
+          <tr>
+            <td><input class="form-control form-control-sm first" value="{{ m.first }}"></td>
+            <td><input class="form-control form-control-sm second" value="{{ m.second }}"></td>
+            <td><input class="form-control form-control-sm model" value="{{ m.model }}"></td>
+            <td><button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">X</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <button class="btn btn-outline-primary btn-sm" onclick="addRow()">Adicionar</button>
+      <button class="btn btn-primary" onclick="salvar()">Salvar</button>
+      <span id="msg" class="text-success ms-2" style="display:none;">Salvo!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+function addRow() {
+  const tbody = document.querySelector('#tabela tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="form-control form-control-sm first"></td>
+    <td><input class="form-control form-control-sm second"></td>
+    <td><input class="form-control form-control-sm model"></td>
+    <td><button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove()">X</button></td>`;
+  tbody.appendChild(tr);
+}
+async function salvar() {
+  const rows = document.querySelectorAll('#tabela tbody tr');
+  const data = Array.from(rows).map(tr => ({
+    first: tr.querySelector('.first').value.trim(),
+    second: tr.querySelector('.second').value.trim(),
+    model: tr.querySelector('.model').value.trim(),
+  })).filter(e => e.first && e.second && e.model);
+  await fetch('/modelos-compostos/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  });
+  document.getElementById('msg').style.display = 'inline';
+  setTimeout(() => document.getElementById('msg').style.display = 'none', 2000);
+}
+</script>
+</body>
+</html>
