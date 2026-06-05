@@ -220,9 +220,10 @@ def index():
 def marcas():
     session = get_session()
     try:
+        _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         rows = (
             session.query(CarListing.brand, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None))
+            .filter(CarListing.brand.isnot(None), ~CarListing.olx_id.in_(_ignored))
             .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
@@ -236,9 +237,10 @@ def marcas():
 def todos_modelos():
     session = get_session()
     try:
+        _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         rows = (
             session.query(CarListing.brand, CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None), CarListing.model.isnot(None))
+            .filter(CarListing.brand.isnot(None), CarListing.model.isnot(None), ~CarListing.olx_id.in_(_ignored))
             .group_by(CarListing.brand, CarListing.model)
             .order_by(CarListing.brand, CarListing.model)
             .all()
@@ -252,9 +254,10 @@ def todos_modelos():
 def modelos(brand):
     session = get_session()
     try:
+        _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         rows = (
             session.query(CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.brand == brand, CarListing.model.isnot(None))
+            .filter(CarListing.brand == brand, CarListing.model.isnot(None), ~CarListing.olx_id.in_(_ignored))
             .group_by(CarListing.model)
             .order_by(CarListing.model)
             .all()
