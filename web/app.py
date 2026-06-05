@@ -105,8 +105,9 @@ def index():
             q = q.filter(CarListing.year.in_(year_filter))
 
         _ignored_sub = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
-        q = q.filter(~CarListing.olx_id.in_(_ignored_sub))
-        base_q = base_q.filter(~CarListing.olx_id.in_(_ignored_sub))
+        _ignored_filter = ~CarListing.olx_id.in_(_ignored_sub)
+        q = q.filter(_ignored_filter)
+        base_q = base_q.filter(_ignored_filter)
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -124,35 +125,35 @@ def index():
         listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
         available_cities = (
             session.query(CarListing.city, func.count(CarListing.id))
-            .filter(CarListing.city.isnot(None))
+            .filter(CarListing.city.isnot(None), _ignored_filter)
             .group_by(CarListing.city)
             .order_by(CarListing.city)
             .all()
         )
         available_brands = (
             session.query(CarListing.brand, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None))
+            .filter(CarListing.brand.isnot(None), _ignored_filter)
             .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
         )
         mq = (
             session.query(CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.model.isnot(None))
+            .filter(CarListing.model.isnot(None), _ignored_filter)
         )
         if brands:
             mq = mq.filter(CarListing.brand.in_(brands))
         available_models = mq.group_by(CarListing.model).order_by(CarListing.model).all()
         nq = (
             session.query(CarListing.neighborhood, CarListing.city, func.count(CarListing.id))
-            .filter(CarListing.city.isnot(None))
+            .filter(CarListing.city.isnot(None), _ignored_filter)
         )
         if city_check:
             nq = nq.filter(CarListing.city.in_(city_check))
         raw_neighborhoods = nq.group_by(CarListing.neighborhood, CarListing.city).order_by(CarListing.neighborhood).all()
         no_nb_count = (
             session.query(func.count(CarListing.id))
-            .filter(CarListing.neighborhood.is_(None), CarListing.city.isnot(None))
+            .filter(CarListing.neighborhood.is_(None), CarListing.city.isnot(None), _ignored_filter)
         )
         if city_check:
             no_nb_count = no_nb_count.filter(CarListing.city.in_(city_check))
