@@ -133,7 +133,7 @@ class OlxSpider(scrapy.Spider):
         for ad in ads:
             title = (ad.get("subject") or "")
             lower = title.lower()
-            if "*" in title or "retirada de peça" in lower or "entrada" in lower or "parcelas" in lower:
+            if "*" in title or "retirada de peça" in lower or "entrada" in lower or "parcelas" in lower or "sucata" in lower:
                 continue
             item = self._item_from_listing_data(ad)
             yield item

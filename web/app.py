@@ -1,9 +1,12 @@
 import os
 import sys
 import json
+import zipfile
+import io
 import subprocess
 import threading
-from flask import Flask, render_template, request, Response, redirect, url_for
+import shutil
+from flask import Flask, render_template, request, Response, redirect, url_for, send_file
 import urllib.request
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -389,6 +392,51 @@ def save_compounds():
         json.dump(data, f, indent=2)
         f.write("\n")
     return ("", 200)
+
+
+DB_PATH = os.path.join(_project_root, "car_listings.db")
+
+
+@app.route("/export")
+def export_db():
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(DB_PATH, "car_listings.db")
+        cfg = os.path.join(_project_root, "config.py")
+        if os.path.exists(cfg):
+            zf.write(cfg, "config.py")
+        if os.path.exists(COMPOUND_PATH):
+            zf.write(COMPOUND_PATH, "models_compostos.json")
+    buf.seek(0)
+    return send_file(buf, mimetype="application/zip", as_attachment=True, download_name="carros-olx.zip")
+
+
+@app.route("/import")
+def import_page():
+    return render_template("import.html")
+
+
+@app.route("/import", methods=["POST"])
+def import_db():
+    f = request.files.get("file")
+    if not f or not f.filename.endswith(".zip"):
+        return redirect(url_for("import_page"))
+
+    zf = zipfile.ZipFile(f.stream)
+    tmp = _project_root + "/.car_listings_import.db"
+    with open(tmp, "wb") as out:
+        out.write(zf.read("car_listings.db"))
+    if "config.py" in zf.namelist():
+        zf.extract("config.py", _project_root)
+    if "models_compostos.json" in zf.namelist():
+        zf.extract("models_compostos.json", _project_root)
+    zf.close()
+
+    from models import engine, init_db
+    engine.dispose()
+    os.replace(tmp, DB_PATH)
+    init_db()
+    return redirect("/")
 
 
 @app.route("/config")
