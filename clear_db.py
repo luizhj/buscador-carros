@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Remove todos os anúncios baixados do banco de dados."""
-from models import get_session, CarListing
+"""Remove anúncios baixados (preserva ignorados)."""
+from models import get_session, CarListing, IgnoredListing
 
 
 def clear_db():
     session = get_session()
-    count = session.query(CarListing).delete()
+    ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+    count = session.query(CarListing).filter(~CarListing.olx_id.in_(ignored)).delete(synchronize_session=False)
     session.commit()
     session.close()
     return count
