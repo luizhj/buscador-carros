@@ -191,10 +191,18 @@ class OlxSpider(scrapy.Spider):
                 raw = parts[idx:]
                 if len(raw) > 1 and raw[0] == "Grand" and raw[1] == "Siena":
                     model = "Grand Siena"
+                elif len(raw) > 1 and raw[0] == "Grand" and raw[1] == "Vitara":
+                    model = "Grand Vitara"
                 elif len(raw) > 1 and raw[0] == "C4" and raw[1] == "Lounge":
                     model = "C4 Lounge"
                 elif len(raw) > 1 and raw[0] == "Santa" and raw[1] == "Fe":
                     model = "Santa Fe"
+                elif len(raw) > 1 and raw[0] == "Classe" and raw[1] in ("A", "B"):
+                    model = f"Classe {raw[1]}"
+                elif len(raw) > 1 and raw[0] == "New" and raw[1] == "Beetle":
+                    model = "New Beetle"
+                elif len(raw) > 1 and raw[0] == "XC" and raw[1] == "60":
+                    model = "XC 60"
                 else:
                     model = raw[0]
 
