@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime, timezone
 
@@ -38,6 +38,13 @@ class CarListing(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+
+class IgnoredListing(Base):
+    __tablename__ = "ignored_listings"
+    olx_id = Column(String, primary_key=True)
+    title = Column(String)
+    ignored_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 def init_db():

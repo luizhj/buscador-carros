@@ -11,7 +11,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from sqlalchemy import func
-from models import CarListing, get_session, init_db
+from models import CarListing, IgnoredListing, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -103,6 +103,10 @@ def index():
         year_filter = [int(y) for y in year_filter if y.isdigit()]
         if year_filter:
             q = q.filter(CarListing.year.in_(year_filter))
+
+        _ignored_sub = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+        q = q.filter(~CarListing.olx_id.in_(_ignored_sub))
+        base_q = base_q.filter(~CarListing.olx_id.in_(_ignored_sub))
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -259,13 +263,45 @@ def modelos(brand):
         session.close()
 
 
-@app.route("/delete/<int:listing_id>")
-def delete_listing(listing_id):
+@app.route("/ignore/<int:listing_id>")
+def ignore_listing(listing_id):
     session = get_session()
     try:
         listing = session.get(CarListing, listing_id)
-        if listing:
-            session.delete(listing)
+        if listing and listing.olx_id:
+            existing = session.get(IgnoredListing, listing.olx_id)
+            if not existing:
+                session.add(IgnoredListing(olx_id=listing.olx_id, title=listing.title))
+                session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/")
+
+
+@app.route("/ignorados")
+def ignored_listings():
+    session = get_session()
+    try:
+        q = session.query(CarListing).join(IgnoredListing, CarListing.olx_id == IgnoredListing.olx_id)
+        sort = request.args.get("sort", "")
+        order = IgnoredListing.ignored_at.desc()
+        if sort == "price_asc":
+            order = CarListing.price.asc().nullslast()
+        elif sort == "price_desc":
+            order = CarListing.price.desc().nullslast()
+        listings = q.order_by(order).all()
+        return render_template("ignorados.html", listings=listings)
+    finally:
+        session.close()
+
+
+@app.route("/restore/<olx_id>")
+def restore_listing(olx_id):
+    session = get_session()
+    try:
+        ignored = session.get(IgnoredListing, olx_id)
+        if ignored:
+            session.delete(ignored)
             session.commit()
     finally:
         session.close()

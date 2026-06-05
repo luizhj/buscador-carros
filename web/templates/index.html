@@ -16,6 +16,7 @@
         <a href="/marcas" class="btn btn-outline-info btn-sm">Marcas</a>
         <a href="/modelos" class="btn btn-outline-info btn-sm">Todos os modelos</a>
         <a href="/config" class="btn btn-outline-warning btn-sm">Configurar</a>
+        <a href="/ignorados" class="btn btn-outline-secondary btn-sm">Ignorados</a>
       </div>
       <div class="card shadow-sm">
         <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#brands-collapse" aria-expanded="true">
@@ -238,7 +239,7 @@
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
               <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
-              <td><a href="/delete/{{ ad.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Excluir este anúncio?')">Excluir</a></td>
+              <td><a href="/ignore/{{ ad.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Ignorar este anúncio? Ele não aparecerá mais nas listas.')">Ignorar</a></td>
             </tr>
             {% endfor %}
           </tbody>

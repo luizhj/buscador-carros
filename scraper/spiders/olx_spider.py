@@ -14,7 +14,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from config import START_URL, START_PAGE
-from models import CarListing, get_session, init_db
+from models import CarListing, IgnoredListing, get_session, init_db
 
 class CarItem(scrapy.Item):
     olx_id = scrapy.Field()
@@ -45,13 +45,14 @@ class DatabasePipeline:
         init_db()
 
     def process_item(self, item, spider):
+        olx_id = item.get("olx_id")
+        if not olx_id:
+            return item
         session = get_session()
         try:
-            existing = (
-                session.query(CarListing)
-                .filter_by(olx_id=item.get("olx_id"))
-                .first()
-            )
+            if session.get(IgnoredListing, olx_id):
+                return item
+            existing = session.query(CarListing).filter_by(olx_id=olx_id).first()
             if existing:
                 for key in item.fields:
                     val = item.get(key)
