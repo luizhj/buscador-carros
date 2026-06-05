@@ -43,5 +43,20 @@
     "first": "Xsara",
     "second": "Picasso",
     "model": "Xsara Picasso"
+  },
+  {
+    "first": "Joy",
+    "second": "Hatch",
+    "model": "Onix"
+  },
+  {
+    "first": "Joy",
+    "second": "Plus",
+    "model": "Onix"
+  },
+  {
+    "first": "Range",
+    "second": "Rover",
+    "model": "Range Rover"
   }
 ]

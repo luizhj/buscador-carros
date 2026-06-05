@@ -54,7 +54,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <textarea id="plainText" class="form-control" style="font-family:monospace;font-size:0.85em;min-height:300px;" readonly>{% for brand, model, count in modelos %}{{ brand }}: {{ model }}
+          <textarea id="plainText" class="form-control" style="font-family:monospace;font-size:0.85em;min-height:300px;" readonly>{% for brand, model, count in modelos %}{{ brand }}: {{ model }} ({{ count }})
 {% endfor %}</textarea>
         </div>
         <div class="modal-footer">
