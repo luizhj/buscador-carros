@@ -11,7 +11,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from sqlalchemy import func
-from models import CarListing, IgnoredListing, get_session, init_db
+from models import CarListing, IgnoredListing, FavoriteListing, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -211,6 +211,7 @@ def index():
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
             sort=sort,
+            favorited={r[0] for r in session.query(FavoriteListing.olx_id).all()},
         )
     finally:
         session.close()
@@ -294,6 +295,46 @@ def ignore_listing(listing_id):
     finally:
         session.close()
     return redirect(request.referrer or "/")
+
+
+@app.route("/favorite/<int:listing_id>", methods=["POST"])
+def favorite_listing(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing and listing.olx_id:
+            if not session.get(FavoriteListing, listing.olx_id):
+                session.add(FavoriteListing(olx_id=listing.olx_id, title=listing.title))
+                session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
+@app.route("/unfavorite/<int:listing_id>", methods=["POST"])
+def unfavorite_listing(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing and listing.olx_id:
+            fav = session.get(FavoriteListing, listing.olx_id)
+            if fav:
+                session.delete(fav)
+                session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
+@app.route("/favoritos")
+def favoritos():
+    session = get_session()
+    try:
+        q = session.query(CarListing).join(FavoriteListing, CarListing.olx_id == FavoriteListing.olx_id)
+        listings = q.order_by(FavoriteListing.favorited_at.desc()).all()
+        return render_template("favoritos.html", listings=listings)
+    finally:
+        session.close()
 
 
 @app.route("/ignorados")

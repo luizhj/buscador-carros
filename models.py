@@ -47,6 +47,13 @@ class IgnoredListing(Base):
     ignored_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class FavoriteListing(Base):
+    __tablename__ = "favorite_listings"
+    olx_id = Column(String, primary_key=True)
+    title = Column(String)
+    favorited_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 def init_db():
     Base.metadata.create_all(engine)
 

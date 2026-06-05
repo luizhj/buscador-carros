@@ -18,6 +18,7 @@
         <a href="/modelos-compostos" class="btn btn-outline-info btn-sm">Modelos compostos</a>
         <a href="/config" class="btn btn-outline-warning btn-sm">Configurar</a>
         <a href="/ignorados" class="btn btn-outline-secondary btn-sm">Ignorados</a>
+        <a href="/favoritos" class="btn btn-outline-danger btn-sm">♥ Favoritos</a>
       </div>
       <div class="card shadow-sm">
         <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#brands-collapse" aria-expanded="true">
@@ -219,6 +220,7 @@
           <thead class="table-dark">
             <tr>
               <th style="width:3%"><input type="checkbox" id="select-all" onchange="toggleAllRows(this)" class="form-check-input"></th>
+              <th style="width:4%">Fav</th>
               <th style="width:8%">Foto</th>
               <th style="width:30%">Título</th>
               <th style="width:10%">Preço</th>
@@ -232,7 +234,12 @@
           <tbody>
             {% for ad in listings %}
             <tr>
-              <td><input type="checkbox" name="select_listing" value="{{ ad.id }}" class="form-check-input"></td>
+              <td><input type="checkbox" name="select_listing" value="{{ ad.id }}" class="form-check-input" style="margin-top:8px;"></td>
+              <td style="text-align:center;vertical-align:middle;">
+                <button class="btn btn-sm p-0 border-0 fs-5" onclick="toggleFav({{ ad.id }})"
+                  style="color:{% if ad.olx_id in favorited %}red{% else %}#ccc{% endif %};line-height:1;"
+                  id="fav-{{ ad.id }}">♥</button>
+              </td>
               <td>
                 {% if ad.image_urls %}
                 {% set imgs = ad.image_urls|fromjson %}
@@ -261,6 +268,12 @@ function toggleAll(master, name) {
 }
 function toggleAllRows(master) {
   document.querySelectorAll('input[name="select_listing"]').forEach(cb => cb.checked = master.checked);
+}
+async function toggleFav(id) {
+  const btn = document.getElementById('fav-' + id);
+  const isFav = btn.style.color === 'red';
+  await fetch('/' + (isFav ? 'unfavorite' : 'favorite') + '/' + id, { method: 'POST' });
+  btn.style.color = isFav ? '#ccc' : 'red';
 }
 document.getElementById('ignore-selected').onclick = async function() {
   const checked = document.querySelectorAll('input[name="select_listing"]:checked');
