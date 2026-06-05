@@ -57,3 +57,58 @@ Ou via interface web: `http://localhost:5000/config` — cole a URL de pesquisa 
 Em `config.py`:
 - `START_URL` — URL da pesquisa na OLX
 - `START_PAGE` — página inicial (1 = primeira página)
+
+## Interface
+
+### Listagem de anúncios
+
+Tabela com foto, título, preço, ano, KM, cidade e ações (ignorar/favoritar). Barra lateral com filtros por marca, modelo, cidade, bairro, tipo, motor, câmbio e ano.
+
+![Listagem de anúncios](imagens/listagem_anuncios.png)
+
+### Filtros
+
+Filtros com checkbox, itens selecionados aparecem primeiro e botão "Marcar todos".
+
+![Filtro de modelos na listagem](imagens/filtro_modelos_na_listagem.png)
+
+### Marcas
+
+Lista de marcas disponíveis com contagem de anúncios.
+
+![Lista por marca](imagens/lista_por_marca.png)
+
+Modelos de uma marca específica.
+
+![Lista de modelos filtrados por marca](imagens/lista_modelos_filtrados_por_marca.png)
+
+### Todos os modelos
+
+Grid com todos os modelos agrupados por marca, com botão para copiar lista em texto puro.
+
+![Todos os modelos](imagens/todos_os_modelos.png)
+![Exportar modelos em texto](imagens/exportar_modelos_texto.png)
+
+### Modelos compostos
+
+Página para gerenciar modelos com nome composto (duas palavras). As alterações são salvas em `models_compostos.json` e lidas pelo scraper automaticamente.
+
+![Modelos compostos](imagens/modelos_compostos.png)
+
+### Anúncios ignorados
+
+Anúncios ignorados são ocultados da listagem e filtros, mas mantidos no banco. Podem ser restaurados pela página de ignorados.
+
+![Anúncios ignorados](imagens/anuncios_ignorados.png)
+
+### Anúncios favoritos
+
+Marque anúncios com ♥ para acesso rápido. Página dedicada lista apenas os favoritos.
+
+![Anúncios favoritos](imagens/anuncios_favoritos.png)
+
+### Configuração
+
+Página para definir URL de pesquisa, executar o scraper, gerenciar modelos compostos, exportar/importar banco de dados.
+
+![Configuração](imagens/configuracao.png)
