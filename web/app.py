@@ -267,6 +267,20 @@ def modelos(brand):
         session.close()
 
 
+@app.route("/ignore-batch", methods=["POST"])
+def ignore_batch():
+    ids = [int(v) for v in request.form.getlist("listing_id") if v.isdigit()]
+    session = get_session()
+    try:
+        for listing in session.query(CarListing).filter(CarListing.id.in_(ids)):
+            if listing.olx_id and not session.get(IgnoredListing, listing.olx_id):
+                session.add(IgnoredListing(olx_id=listing.olx_id, title=listing.title))
+        session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/")
+
+
 @app.route("/ignore/<int:listing_id>")
 def ignore_listing(listing_id):
     session = get_session()
