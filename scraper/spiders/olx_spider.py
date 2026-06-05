@@ -192,6 +192,8 @@ class OlxSpider(scrapy.Spider):
                     model = "Grand Siena"
                 elif len(raw) > 1 and raw[0] == "C4" and raw[1] == "Lounge":
                     model = "C4 Lounge"
+                elif len(raw) > 1 and raw[0] == "Santa" and raw[1] == "Fe":
+                    model = "Santa Fe"
                 else:
                     model = raw[0]
 
