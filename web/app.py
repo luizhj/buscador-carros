@@ -61,56 +61,62 @@ def _int_or_none(val):
 def index():
     session = get_session()
     try:
-        q = session.query(CarListing)
-
+        # -- filtros universais (não auto-excludentes) --
+        q_base = session.query(CarListing)
         if s := request.args.get("q"):
-            q = q.filter(CarListing.title.ilike(f"%{s}%"))
+            q_base = q_base.filter(CarListing.title.ilike(f"%{s}%"))
         if p_min := _int_or_none(request.args.get("price_min")):
-            q = q.filter(CarListing.price >= p_min * CENTAVOS_PER_REAL)
+            q_base = q_base.filter(CarListing.price >= p_min * CENTAVOS_PER_REAL)
         if p_max := _int_or_none(request.args.get("price_max")):
-            q = q.filter(CarListing.price <= p_max * CENTAVOS_PER_REAL)
-        if y_min := _int_or_none(request.args.get("year_min")):
-            q = q.filter(CarListing.year >= y_min)
-        if y_max := _int_or_none(request.args.get("year_max")):
-            q = q.filter(CarListing.year <= y_max)
-        if km_max := _int_or_none(request.args.get("km_max")):
-            q = q.filter(CarListing.mileage <= km_max)
-        if city := request.args.get("city"):
-            q = q.filter(CarListing.city.ilike(f"%{city}%"))
+            q_base = q_base.filter(CarListing.price <= p_max * CENTAVOS_PER_REAL)
+
+        _ignored_sub = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+        _ignored_filter = ~CarListing.olx_id.in_(_ignored_sub)
+        q_base = q_base.filter(_ignored_filter)
+
+        # -- filtros auto-excludentes (lidos antes, aplicados em q_final) --
         brands = request.args.getlist("brand")
-        if brands:
-            q = q.filter(CarListing.brand.in_(brands))
-        if models := request.args.getlist("model"):
-            q = q.filter(CarListing.model.in_(models))
-        if city_check := request.args.getlist("city_check"):
-            q = q.filter(CarListing.city.in_(city_check))
-        if neighborhood_check := request.args.getlist("neighborhood_check"):
-            if "Sem bairro informado" in neighborhood_check:
-                q = q.filter(
-                    CarListing.neighborhood.is_(None) | CarListing.neighborhood.in_([n for n in neighborhood_check if n != "Sem bairro informado"])
-                )
-            else:
-                q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
-        # base query sem filtros de si-próprio para calcular available_*
-        base_q = q
+        models_list = request.args.getlist("model")
+        city_txt = request.args.get("city")
+        city_check = request.args.getlist("city_check")
+        neighborhood_check = request.args.getlist("neighborhood_check")
         cartype_filter = request.args.getlist("cartype_filter")
         motorpower_filter = request.args.getlist("motorpower_filter")
         gearbox_filter = request.args.getlist("gearbox_filter")
-        year_filter = request.args.getlist("year_filter")
+        year_filter = [int(y) for y in request.args.getlist("year_filter") if y.isdigit()]
+        y_min = _int_or_none(request.args.get("year_min"))
+        y_max = _int_or_none(request.args.get("year_max"))
+        km_max = _int_or_none(request.args.get("km_max"))
+
+        # -- q_final = q_base + todos os auto-excludentes --
+        q = q_base
+        if brands:
+            q = q.filter(CarListing.brand.in_(brands))
+        if models_list:
+            q = q.filter(CarListing.model.in_(models_list))
+        if city_txt:
+            q = q.filter(CarListing.city.ilike(f"%{city_txt}%"))
+        if city_check:
+            q = q.filter(CarListing.city.in_(city_check))
+        if neighborhood_check:
+            if "Sem bairro informado" in neighborhood_check:
+                q = q.filter(CarListing.neighborhood.is_(None) | CarListing.neighborhood.in_([n for n in neighborhood_check if n != "Sem bairro informado"]))
+            else:
+                q = q.filter(CarListing.neighborhood.in_(neighborhood_check))
         if cartype_filter:
             q = q.filter(CarListing.cartype.in_(cartype_filter))
         if motorpower_filter:
             q = q.filter(CarListing.motorpower.in_(motorpower_filter))
         if gearbox_filter:
             q = q.filter(CarListing.transmission.in_(gearbox_filter))
-        year_filter = [int(y) for y in year_filter if y.isdigit()]
         if year_filter:
             q = q.filter(CarListing.year.in_(year_filter))
-
-        _ignored_sub = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
-        _ignored_filter = ~CarListing.olx_id.in_(_ignored_sub)
-        q = q.filter(_ignored_filter)
-        base_q = base_q.filter(_ignored_filter)
+        if y_min:
+            q = q.filter(CarListing.year >= y_min)
+        if y_max:
+            q = q.filter(CarListing.year <= y_max)
+        if km_max:
+            q = q.filter(CarListing.mileage <= km_max)
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -126,37 +132,68 @@ def index():
             order = CarListing.mileage.asc().nullslast()
 
         listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
+
+        # -- available_* usam q_base + filtros relevantes (EXCETO o próprio) --
+        def _excl(bq, *excluded):
+            """retorna query com todos os filtros auto-excludentes exceto os listados."""
+            r = bq
+            if brands and "brand" not in excluded:
+                r = r.filter(CarListing.brand.in_(brands))
+            if models_list and "model" not in excluded:
+                r = r.filter(CarListing.model.in_(models_list))
+            if city_txt and "city" not in excluded:
+                r = r.filter(CarListing.city.ilike(f"%{city_txt}%"))
+            if city_check and "city" not in excluded:
+                r = r.filter(CarListing.city.in_(city_check))
+            if neighborhood_check and "neighborhood" not in excluded:
+                if "Sem bairro informado" in neighborhood_check:
+                    r = r.filter(CarListing.neighborhood.is_(None) | CarListing.neighborhood.in_([n for n in neighborhood_check if n != "Sem bairro informado"]))
+                else:
+                    r = r.filter(CarListing.neighborhood.in_(neighborhood_check))
+            if cartype_filter and "cartype" not in excluded:
+                r = r.filter(CarListing.cartype.in_(cartype_filter))
+            if motorpower_filter and "motorpower" not in excluded:
+                r = r.filter(CarListing.motorpower.in_(motorpower_filter))
+            if gearbox_filter and "gearbox" not in excluded:
+                r = r.filter(CarListing.transmission.in_(gearbox_filter))
+            if year_filter and "year" not in excluded:
+                r = r.filter(CarListing.year.in_(year_filter))
+            if y_min and "year" not in excluded:
+                r = r.filter(CarListing.year >= y_min)
+            if y_max and "year" not in excluded:
+                r = r.filter(CarListing.year <= y_max)
+            if km_max and "km" not in excluded:
+                r = r.filter(CarListing.mileage <= km_max)
+            return r
+
         available_cities = (
-            session.query(CarListing.city, func.count(CarListing.id))
-            .filter(CarListing.city.isnot(None), _ignored_filter)
+            _excl(q_base).with_entities(CarListing.city, func.count(CarListing.id))
+            .filter(CarListing.city.isnot(None))
             .group_by(CarListing.city)
             .order_by(CarListing.city)
             .all()
         )
         available_brands = (
-            session.query(CarListing.brand, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None), _ignored_filter)
+            _excl(q_base, "brand").with_entities(CarListing.brand, func.count(CarListing.id))
+            .filter(CarListing.brand.isnot(None))
             .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
         )
-        mq = (
-            session.query(CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.model.isnot(None), _ignored_filter)
-        )
+        mq = _excl(q_base, "model").with_entities(CarListing.model, func.count(CarListing.id)).filter(CarListing.model.isnot(None))
         if brands:
             mq = mq.filter(CarListing.brand.in_(brands))
         available_models = mq.group_by(CarListing.model).order_by(CarListing.model).all()
         nq = (
-            session.query(CarListing.neighborhood, CarListing.city, func.count(CarListing.id))
-            .filter(CarListing.city.isnot(None), _ignored_filter)
+            _excl(q_base, "neighborhood").with_entities(CarListing.neighborhood, CarListing.city, func.count(CarListing.id))
+            .filter(CarListing.city.isnot(None))
         )
         if city_check:
             nq = nq.filter(CarListing.city.in_(city_check))
         raw_neighborhoods = nq.group_by(CarListing.neighborhood, CarListing.city).order_by(CarListing.neighborhood).all()
         no_nb_count = (
-            session.query(func.count(CarListing.id))
-            .filter(CarListing.neighborhood.is_(None), CarListing.city.isnot(None), _ignored_filter)
+            q_base.with_entities(func.count(CarListing.id))
+            .filter(CarListing.neighborhood.is_(None), CarListing.city.isnot(None))
         )
         if city_check:
             no_nb_count = no_nb_count.filter(CarListing.city.in_(city_check))
@@ -166,33 +203,34 @@ def index():
             available_neighborhoods.append(("Sem bairro informado", "", no_nb_count))
 
         available_cartypes = (
-            base_q.with_entities(CarListing.cartype, func.count(CarListing.id))
+            _excl(q_base, "cartype").with_entities(CarListing.cartype, func.count(CarListing.id))
             .filter(CarListing.cartype.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.cartype)
             .order_by(CarListing.cartype)
             .all()
         )
         available_motorpowers = (
-            base_q.with_entities(CarListing.motorpower, func.count(CarListing.id))
+            _excl(q_base, "motorpower").with_entities(CarListing.motorpower, func.count(CarListing.id))
             .filter(CarListing.motorpower.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.motorpower)
             .order_by(CarListing.motorpower)
             .all()
         )
         available_gearboxes = (
-            base_q.with_entities(CarListing.transmission, func.count(CarListing.id))
+            _excl(q_base, "gearbox").with_entities(CarListing.transmission, func.count(CarListing.id))
             .filter(CarListing.transmission.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.transmission)
             .order_by(CarListing.transmission)
             .all()
         )
         available_years = (
-            base_q.with_entities(CarListing.year, func.count(CarListing.id))
+            _excl(q_base, "year").with_entities(CarListing.year, func.count(CarListing.id))
             .filter(CarListing.year.isnot(None), CarListing.olx_id.isnot(None))
             .group_by(CarListing.year)
             .order_by(CarListing.year.desc())
             .all()
         )
+
         return render_template(
             "index.html",
             listings=listings,
