@@ -17,6 +17,7 @@ Scraper de anúncios de carros da OLX + interface web para visualização com fi
 - **Modelos compostos** — reconhece nomes de modelo com duas palavras (Grand Siena, C4 Lounge, etc.) via JSON editável pela interface web
 - **Exportar/Importar banco** — backup completo (.zip) do banco, configurações e modelos compostos
 - Ignora anúncios com palavras-chave no título (*, retirada de peça, entrada, parcelas, sucata)
+- **Status dos anúncios:** novo/não novo/excluído — detectados automaticamente ao executar o scraper
 
 ## Stack
 
@@ -126,6 +127,18 @@ Marque anúncios com ♥ para acesso rápido. Página dedicada lista apenas os f
 ### Filtros salvos
 
 Botão `+` na sidebar permite salvar o conjunto atual de filtros (marca, modelo, tipo, preço, etc.) com um nome. Os filtros ficam salvos no banco de dados e podem ser carregados pelo dropdown "Filtros salvos..." na sidebar.
+
+### Status dos anúncios
+
+O scraper detecta automaticamente o status de cada anúncio:
+
+| Status       | Ícone                 | Critério                            | Onde aparece                              |
+| ------------ | --------------------- | ----------------------------------- | ----------------------------------------- |
+| **Novo**     | Badge verde "Novo"     | `created_at ≈ updated_at`             | Listagem com badge e linha destacada       |
+| **Não novo** | Normal                | `created_at < updated_at`             | Listagem normalmente                       |
+| **Excluído** | Badge vermelho "Excluído" | `status = 'deleted'` (não reencontrado no último scrape) | Oculto da listagem; visível em Favoritos |
+
+O botão "Apenas novos" filtra a listagem para exibir somente os anúncios com badge verde.
 
 ### Paginação
 
