@@ -52,6 +52,22 @@ python -m venv .venv
 
 Ou via interface web: `http://localhost:5000/config` — cole a URL de pesquisa da OLX e clique em "Salvar e Atualizar".
 
+### Diferenças entre terminal e web
+
+|                             | Terminal `run_scraper.py`                                                                                                                             | Web "Salvar e Atualizar"                                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Limpa o banco**           | ❌ Não — faz upsert (atualiza anúncios existentes, insere novos)                                                                                        | ✅ Sim — apaga tudo antes de baixar                                                                                                                     |
+| **Salva cidades permitidas** | ❌ Não — usa o `cidades_permitidas.json` atual                                                                                                          | ✅ Salva o conteúdo do campo "Cidades permitidas" antes de iniciar                                                                                      |
+| **Lê URL de**               | `.current_url` ou `config.py`                                                                                                                           | Formulário da página                                                                                                                                    |
+| **Progresso**               | Terminal (texto)                                                                                                                                      | Barra na página web                                                                                                                                   |
+| **Após finalizar**          | Prompt volta ao normal                                                                                                                                | Redireciona automaticamente para a listagem                                                                                                           |
+
+Para rodar idêntico ao web pelo terminal:
+
+```bash
+.venv/bin/python clear_db.py && .venv/bin/python run_scraper.py
+```
+
 ## Configuração
 
 Em `config.py`:
