@@ -563,6 +563,25 @@ def _run_scraper_background(url, cidades):
         proc.wait()
 
 
+def _run_scraper_background_noclear(url, cidades):
+    """Roda o scraper em background sem limpar o banco."""
+    with open(CIDADES_PATH, "w") as f:
+        json.dump(cidades, f, indent=2, ensure_ascii=False)
+    with open(CURRENT_URL_FILE, "w") as f:
+        f.write(url)
+    with open(LOG_FILE, "w") as f:
+        f.write(f"URL: {url}\nAtualizando anúncios existentes...\n\n")
+        f.flush()
+    env = {**os.environ, "SCRAPE_URL": url}
+    with open(LOG_FILE, "a") as f:
+        proc = subprocess.Popen(
+            [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],
+            stdout=f, stderr=subprocess.STDOUT,
+            text=True, cwd=_project_root, env=env,
+        )
+        proc.wait()
+
+
 @app.route("/clear-all", methods=["POST"])
 def clear_all():
     session = get_session()
@@ -596,6 +615,17 @@ def run_scrape():
     cidades_raw = request.form.get("cidades", "").strip()
     cidades = [c.strip() for c in cidades_raw.split("\n") if c.strip()]
     threading.Thread(target=_run_scraper_background, args=(url, cidades), daemon=True).start()
+    return redirect(url_for("scraping_page"))
+
+
+@app.route("/run-scrape-only", methods=["POST"])
+def run_scrape_only():
+    url = request.form.get("url", "").strip()
+    if not url:
+        return redirect(url_for("config_page"))
+    cidades_raw = request.form.get("cidades", "").strip()
+    cidades = [c.strip() for c in cidades_raw.split("\n") if c.strip()]
+    threading.Thread(target=_run_scraper_background_noclear, args=(url, cidades), daemon=True).start()
     return redirect(url_for("scraping_page"))
 
 
