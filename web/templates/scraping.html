@@ -23,7 +23,7 @@ const bar = document.getElementById('bar');
 const status = document.getElementById('status');
 const counter = document.getElementById('counter');
 let lastLen = 0;
-let maxItems = 0;
+let totalAds = 0;
 
 async function poll() {
   const resp = await fetch('/scrape-log');
@@ -32,13 +32,14 @@ async function poll() {
     lastLen = text.length;
     const lines = text.trim().split('\n');
     const lastLine = lines[lines.length - 1];
+    const mTotal = text.match(/Total de anúncios: (\d+)/);
+    if (mTotal) totalAds = parseInt(mTotal[1]);
     const m = lastLine.match(/Scraped (\d+) items/);
     if (m) {
       const n = parseInt(m[1]);
-      maxItems = Math.max(maxItems, n);
-      const pct = Math.min(Math.round(n / 25 * 4), 95);
-      bar.style.width = pct + '%';
-      counter.textContent = n + ' anúncios baixados';
+      const pct = totalAds ? Math.min(Math.round(n / totalAds * 100), 99) : 0;
+      bar.style.width = Math.max(pct, 1) + '%';
+      counter.textContent = n + ' anúncios baixados de ' + totalAds;
     }
   }
   if (text.includes('Done!')) {

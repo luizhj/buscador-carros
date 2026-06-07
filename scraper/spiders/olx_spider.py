@@ -129,6 +129,9 @@ class OlxSpider(scrapy.Spider):
 
         props = data.get("props", {}).get("pageProps", {})
         ads = props.get("ads", [])
+        total = props.get("totalOfAds", 0)
+        if total:
+            print(f"Total de anúncios: {total}")
 
         for ad in ads:
             title = (ad.get("subject") or "")
