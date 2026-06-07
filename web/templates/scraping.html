@@ -32,14 +32,20 @@ async function poll() {
     lastLen = text.length;
     const lines = text.trim().split('\n');
     const lastLine = lines[lines.length - 1];
-    const mTotal = text.match(/Total de anúncios: (\d+)/);
-    if (mTotal) totalAds = parseInt(mTotal[1]);
+    if (!totalAds) {
+      const mTotal = text.match(/Total de anúncios: (\d+)/);
+      if (mTotal) totalAds = parseInt(mTotal[1]);
+    }
     const m = lastLine.match(/Scraped (\d+) items/);
     if (m) {
       const n = parseInt(m[1]);
       const pct = totalAds ? Math.min(Math.round(n / totalAds * 100), 99) : 0;
       bar.style.width = Math.max(pct, 1) + '%';
-      counter.textContent = n + ' anúncios baixados de ' + totalAds;
+      if (totalAds && n <= totalAds) {
+        counter.textContent = n + ' anúncios baixados de ' + totalAds;
+      } else {
+        counter.textContent = n + ' anúncios baixados';
+      }
     }
   }
   if (text.includes('Done!')) {
