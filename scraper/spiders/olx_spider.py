@@ -13,7 +13,7 @@ _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from config import START_URL, START_PAGE
+from config import START_URL, START_PAGE, MAX_PAGES
 from models import CarListing, IgnoredListing, get_session, init_db
 
 
@@ -103,7 +103,7 @@ class OlxSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         self._http = cloudscraper.create_scraper()
         self._delay = 1.5
-        self.max_pages = kwargs.get("max_pages", 0)
+        self.max_pages = kwargs.get("max_pages") or MAX_PAGES
         custom_url = kwargs.get("start_url") or START_URL
         self._start_url = custom_url if START_PAGE <= 1 else custom_url + "&o=" + str(START_PAGE)
 
