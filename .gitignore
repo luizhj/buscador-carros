@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 car_listings.db
 *.db
+*.db-journal
 .venv/
 venv/
 .current_url
