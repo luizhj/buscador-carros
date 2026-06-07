@@ -17,6 +17,15 @@ from config import START_URL, START_PAGE
 from models import CarListing, IgnoredListing, get_session, init_db
 
 
+def _cidades_permitidas():
+    path = os.path.join(_project_root, "cidades_permitidas.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
 def _compound_models():
     path = os.path.join(_project_root, "models_compostos.json")
     try:
@@ -139,6 +148,9 @@ class OlxSpider(scrapy.Spider):
             if "*" in title or "retirada de peça" in lower or "entrada" in lower or "parcelas" in lower or "sucata" in lower:
                 continue
             item = self._item_from_listing_data(ad)
+            allowed = _cidades_permitidas()
+            if allowed and item.get("city") and item["city"] not in allowed:
+                continue
             yield item
 
     def _next_listing_url(self, current_url, html):

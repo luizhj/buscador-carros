@@ -507,17 +507,25 @@ def config_page():
     except FileNotFoundError:
         from config import START_URL
         url = START_URL
-    return render_template("config.html", current_url=url)
+    try:
+        with open(CIDADES_PATH) as f:
+            cidades = "\n".join(json.load(f))
+    except (FileNotFoundError, json.JSONDecodeError):
+        cidades = ""
+    return render_template("config.html", current_url=url, cidades=cidades)
 
 
 LOG_FILE = os.path.join(_project_root, "scrape.log")
 
 
+CIDADES_PATH = os.path.join(_project_root, "cidades_permitidas.json")
 CURRENT_URL_FILE = os.path.join(_project_root, ".current_url")
 
 
-def _run_scraper_background(url):
+def _run_scraper_background(url, cidades):
     """Roda o scraper em background escrevendo log em arquivo."""
+    with open(CIDADES_PATH, "w") as f:
+        json.dump(cidades, f, indent=2, ensure_ascii=False)
     from clear_db import clear_db
     removed = clear_db()
     with open(CURRENT_URL_FILE, "w") as f:
@@ -566,7 +574,9 @@ def run_scrape():
     url = request.form.get("url", "").strip()
     if not url:
         return redirect(url_for("config_page"))
-    threading.Thread(target=_run_scraper_background, args=(url,), daemon=True).start()
+    cidades_raw = request.form.get("cidades", "").strip()
+    cidades = [c.strip() for c in cidades_raw.split("\n") if c.strip()]
+    threading.Thread(target=_run_scraper_background, args=(url, cidades), daemon=True).start()
     return redirect(url_for("scraping_page"))
 
 
