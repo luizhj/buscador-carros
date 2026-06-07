@@ -35,6 +35,9 @@
       <form method="POST" action="/clear-all" onsubmit="return confirm('Tem certeza? Todos os anúncios e ignorados serão removidos permanentemente.')">
         <button type="submit" class="btn btn-danger">Limpar tudo</button>
       </form>
+      <form method="POST" action="/clear-keep-favs" onsubmit="return confirm('Tem certeza? Anúncios e ignorados serão removidos. Favoritos preservados.')" class="mt-2">
+        <button type="submit" class="btn btn-danger">Apagar tudo menos favoritos</button>
+      </form>
       <hr>
       <p class="text-muted small">Substitui o banco atual por um arquivo .zip exportado anteriormente.</p>
       <form method="POST" action="/import" enctype="multipart/form-data">

@@ -526,6 +526,19 @@ def clear_all():
     return redirect(url_for("config_page"))
 
 
+@app.route("/clear-keep-favs", methods=["POST"])
+def clear_keep_favs():
+    session = get_session()
+    try:
+        favorited = session.query(FavoriteListing.olx_id).filter(FavoriteListing.olx_id.isnot(None))
+        ca = session.query(CarListing).filter(~CarListing.olx_id.in_(favorited)).delete(synchronize_session=False)
+        ig = session.query(IgnoredListing).delete()
+        session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("config_page"))
+
+
 @app.route("/run-scrape", methods=["POST"])
 def run_scrape():
     url = request.form.get("url", "").strip()
