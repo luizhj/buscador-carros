@@ -29,6 +29,19 @@
     </div>
   </div>
 
+  <div class="card shadow-sm mt-3">
+    <div class="card-header fw-bold">Estatísticas</div>
+    <div class="card-body">
+      <div class="row g-2 text-center">
+        <div class="col-4 col-md-2"><strong>{{ stats.active }}</strong><br><small class="text-muted">Ativos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.deleted }}</strong><br><small class="text-muted">Excluídos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.ignored }}</strong><br><small class="text-muted">Ignorados</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.favorited }}</strong><br><small class="text-muted">Favoritos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.total }}</strong><br><small class="text-muted">Total</small></div>
+      </div>
+    </div>
+  </div>
+
   <div class="d-flex gap-2 mt-3 mb-3 flex-wrap">
     <a href="/modelos-compostos" class="btn btn-outline-info">Modelos compostos</a>
     <a href="/export" class="btn btn-outline-success">⬇ Exportar banco</a>

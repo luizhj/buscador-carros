@@ -531,7 +531,18 @@ def config_page():
             cidades = "\n".join(json.load(f))
     except (FileNotFoundError, json.JSONDecodeError):
         cidades = ""
-    return render_template("config.html", current_url=url, cidades=cidades)
+    session = get_session()
+    try:
+        stats = {
+            "total": session.query(CarListing).count(),
+            "active": session.query(CarListing).filter(CarListing.status == "active").count(),
+            "deleted": session.query(CarListing).filter(CarListing.status == "deleted").count(),
+            "ignored": session.query(IgnoredListing).count(),
+            "favorited": session.query(FavoriteListing).count(),
+        }
+    finally:
+        session.close()
+    return render_template("config.html", current_url=url, cidades=cidades, stats=stats)
 
 
 LOG_FILE = os.path.join(_project_root, "scrape.log")
