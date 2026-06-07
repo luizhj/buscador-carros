@@ -7,6 +7,13 @@ from config import START_URL
 
 # se SCRAPE_URL foi passada via env, sobrescreve START_URL
 url = os.environ.get("SCRAPE_URL") or START_URL
+# se .current_url existir, usa ele (sincroniza com a web)
+_current_file = os.path.join(os.path.dirname(__file__), ".current_url")
+if os.path.exists(_current_file):
+    with open(_current_file) as _f:
+        _u = _f.read().strip()
+        if _u:
+            url = _u
 
 init_db()
 pipeline = DatabasePipeline()
