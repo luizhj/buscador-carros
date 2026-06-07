@@ -123,6 +123,14 @@ Marque anúncios com ♥ para acesso rápido. Página dedicada lista apenas os f
 
 ![Anúncios favoritos](imagens/anuncios_favoritos.png)
 
+### Filtros salvos
+
+Botão `+` na sidebar permite salvar o conjunto atual de filtros (marca, modelo, tipo, preço, etc.) com um nome. Os filtros ficam salvos no banco de dados e podem ser carregados pelo dropdown "Filtros salvos..." na sidebar.
+
+### Paginação
+
+A listagem exibe 50 anúncios por página, com navegação numérica no rodapé. Filtros e ordenação são preservados ao navegar entre páginas.
+
 ### Configuração
 
 Página para definir URL de pesquisa, executar o scraper, gerenciar modelos compostos, exportar/importar banco de dados.
