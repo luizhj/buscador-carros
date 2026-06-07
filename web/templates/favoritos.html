@@ -25,7 +25,7 @@
           <th style="width:5%">Ações</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="fav-body">
         {% for ad in listings %}
         <tr>
           <td>
@@ -40,7 +40,7 @@
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
           <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
           <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
-          <td><a href="/" class="btn btn-outline-danger btn-sm">♥</a></td>
+          <td><button type="button" class="btn btn-outline-danger btn-sm" onclick="unfav(event, '{{ ad.id }}')">♥</button></td>
         </tr>
         {% endfor %}
         {% if not listings %}
@@ -50,5 +50,15 @@
     </table>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+async function unfav(ev, id) {
+  await fetch('/unfavorite/' + id, { method: 'POST' });
+  ev.target.closest('tr').remove();
+  if (!document.querySelector('#fav-body tr')) {
+    document.querySelector('#fav-body').innerHTML = '<tr><td colspan="8" class="text-muted text-center">Nenhum favorito.</td></tr>';
+  }
+}
+</script>
 </body>
 </html>

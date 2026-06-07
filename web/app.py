@@ -23,6 +23,19 @@ app = Flask(__name__)
 app.jinja_env.filters["fromjson"] = lambda s: json.loads(s)
 
 
+def _url_for_page(p):
+    from urllib.parse import urlencode, parse_qs
+    from flask import request as req
+    qs = parse_qs(req.query_string.decode(), keep_blank_values=True)
+    qs.pop("page", None)
+    if p > 1:
+        qs["page"] = [str(p)]
+    return "/?" + urlencode(qs, doseq=True)
+
+
+app.jinja_env.globals["url_for_page"] = _url_for_page
+
+
 def _brl(cents):
     if cents is None:
         return "-"
@@ -131,7 +144,13 @@ def index():
         elif sort == "km_asc":
             order = CarListing.mileage.asc().nullslast()
 
-        listings = q.filter(CarListing.olx_id.isnot(None)).order_by(order).all()
+        base_listings_q = q.filter(CarListing.olx_id.isnot(None)).order_by(order)
+        page = _int_or_none(request.args.get("page")) or 1
+        page = max(page, 1)
+        per_page = 50
+        total = base_listings_q.count()
+        listings = base_listings_q.offset((page - 1) * per_page).limit(per_page).all()
+        total_pages = max((total + per_page - 1) // per_page, 1)
 
         # -- available_* usam q_base + filtros relevantes (EXCETO o próprio) --
         def _excl(bq, *excluded):
@@ -252,6 +271,9 @@ def index():
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
             sort=sort,
+            page=page,
+            total_pages=total_pages,
+            total=total,
             favorited={r[0] for r in session.query(FavoriteListing.olx_id).all()},
         )
     finally:

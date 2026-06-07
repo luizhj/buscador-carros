@@ -245,7 +245,7 @@
             <tr>
               <td><input type="checkbox" name="select_listing" value="{{ ad.id }}" class="form-check-input" style="margin-top:8px;"></td>
               <td style="text-align:center;vertical-align:middle;">
-                <button class="btn btn-sm p-0 border-0 fs-5" onclick="toggleFav({{ ad.id }})"
+                <button type="button" class="btn btn-sm p-0 border-0 fs-5" onclick="toggleFav({{ ad.id }})"
                   style="color:{% if ad.olx_id in favorited %}red{% else %}#ccc{% endif %};line-height:1;"
                   id="fav-{{ ad.id }}">♥</button>
               </td>
@@ -266,6 +266,32 @@
             {% endfor %}
           </tbody>
         </table>
+
+        <nav>
+          <ul class="pagination pagination-sm justify-content-center mt-3">
+            <li class="page-item {{ 'disabled' if page <= 1 }}">
+              <a class="page-link" href="{{ url_for_page(1) if page > 1 else '#' }}">««</a>
+            </li>
+            <li class="page-item {{ 'disabled' if page <= 1 }}">
+              <a class="page-link" href="{{ url_for_page(page-1) if page > 1 else '#' }}">«</a>
+            </li>
+            {% set start = [page-2, 1] | max %}
+            {% set end = [start+4, total_pages] | min %}
+            {% set start = [end-4, 1] | max %}
+            {% for p in range(start, end+1) %}
+            <li class="page-item {{ 'active' if p == page }}">
+              <a class="page-link" href="{{ url_for_page(p) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {{ 'disabled' if page >= total_pages }}">
+              <a class="page-link" href="{{ url_for_page(page+1) if page < total_pages else '#' }}">»</a>
+            </li>
+            <li class="page-item {{ 'disabled' if page >= total_pages }}">
+              <a class="page-link" href="{{ url_for_page(total_pages) if page < total_pages else '#' }}">»»</a>
+            </li>
+          </ul>
+          <p class="text-muted text-center small mb-0">{{ total }} anúncio{{ 's' if total != 1 }} — página {{ page }} de {{ total_pages }}</p>
+        </nav>
       </div>
     </div>
   </form>
