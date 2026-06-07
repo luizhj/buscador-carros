@@ -467,6 +467,8 @@ def export_db():
             zf.write(cfg, "config.py")
         if os.path.exists(COMPOUND_PATH):
             zf.write(COMPOUND_PATH, "models_compostos.json")
+        if os.path.exists(CIDADES_PATH):
+            zf.write(CIDADES_PATH, "cidades_permitidas.json")
     buf.seek(0)
     return send_file(buf, mimetype="application/zip", as_attachment=True, download_name="carros-olx.zip")
 
@@ -490,6 +492,8 @@ def import_db():
         zf.extract("config.py", _project_root)
     if "models_compostos.json" in zf.namelist():
         zf.extract("models_compostos.json", _project_root)
+    if "cidades_permitidas.json" in zf.namelist():
+        zf.extract("cidades_permitidas.json", _project_root)
     zf.close()
 
     from models import engine, init_db
