@@ -140,6 +140,8 @@ O scraper detecta automaticamente o status de cada anúncio:
 
 O botão "Apenas novos" filtra a listagem para exibir somente os anúncios com badge verde.
 
+![Status novo e não novo](imagens/status_anuncio_novo.png)
+
 ### Paginação
 
 A listagem exibe 50 anúncios por página, com navegação numérica no rodapé. Filtros e ordenação são preservados ao navegar entre páginas.
