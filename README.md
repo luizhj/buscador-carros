@@ -131,6 +131,10 @@ Botão `+` na sidebar permite salvar o conjunto atual de filtros (marca, modelo,
 
 A listagem exibe 50 anúncios por página, com navegação numérica no rodapé. Filtros e ordenação são preservados ao navegar entre páginas.
 
+### Filtro de cidades no scraper
+
+No formulário de configuração é possível informar as cidades que devem ser baixadas (uma por linha). Se vazio, baixa anúncios de todas as cidades. O scraper salva no banco apenas anúncios das cidades informadas.
+
 ### Configuração
 
 Página para definir URL de pesquisa, executar o scraper, gerenciar modelos compostos, exportar/importar banco de dados.
