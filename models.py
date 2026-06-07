@@ -54,6 +54,14 @@ class FavoriteListing(Base):
     favorited_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class SavedFilter(Base):
+    __tablename__ = "saved_filters"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    params = Column(Text)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 def init_db():
     Base.metadata.create_all(engine)
 

@@ -93,7 +93,7 @@ class OlxSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._http = cloudscraper.create_scraper()
-        self._delay = 2.0
+        self._delay = 1.5
         self.max_pages = kwargs.get("max_pages", 0)
         custom_url = kwargs.get("start_url") or START_URL
         self._start_url = custom_url if START_PAGE <= 1 else custom_url + "&o=" + str(START_PAGE)

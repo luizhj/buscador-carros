@@ -12,12 +12,22 @@
 
   <form method="GET" class="row">
     <div class="col-md-3 mb-3">
-      <div class="d-grid gap-1 mb-2">
-        <a href="/marcas" class="btn btn-outline-info btn-sm">Marcas</a>
-        <a href="/modelos" class="btn btn-outline-info btn-sm">Todos os modelos</a>
-        <a href="/config" class="btn btn-outline-warning btn-sm">Configurar</a>
-        <a href="/ignorados" class="btn btn-outline-secondary btn-sm">Ignorados</a>
-        <a href="/favoritos" class="btn btn-outline-danger btn-sm">♥ Favoritos</a>
+      <div class="card shadow-sm mb-2">
+        <div class="card-body py-2">
+          <div class="d-flex gap-1 mb-1">
+            <select id="saved-filters" class="form-select form-select-sm" onchange="loadFilter(this.value)">
+              <option value="">Filtros salvos...</option>
+            </select>
+            <button class="btn btn-outline-primary btn-sm" onclick="showSaveModal()" title="Salvar filtro atual">+</button>
+          </div>
+          <div class="d-grid gap-1">
+            <a href="/marcas" class="btn btn-outline-info btn-sm">Marcas</a>
+            <a href="/modelos" class="btn btn-outline-info btn-sm">Todos os modelos</a>
+            <a href="/config" class="btn btn-outline-warning btn-sm">Configurar</a>
+            <a href="/ignorados" class="btn btn-outline-secondary btn-sm">Ignorados</a>
+            <a href="/favoritos" class="btn btn-outline-danger btn-sm">♥ Favoritos</a>
+          </div>
+        </div>
       </div>
       <div class="card shadow-sm">
         <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#brands-collapse" aria-expanded="true">
@@ -260,8 +270,60 @@
     </div>
   </form>
 </div>
+<div class="modal fade" id="saveFilterModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">Salvar filtro</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input id="filter-name" class="form-control" placeholder="Nome do filtro..." maxlength="60">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm" onclick="saveFilter()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+async function loadFilters() {
+  const r = await fetch('/filters');
+  const data = await r.json();
+  const sel = document.getElementById('saved-filters');
+  sel.innerHTML = '<option value="">Filtros salvos...</option>';
+  data.filters.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.name;
+    sel.appendChild(opt);
+  });
+}
+function loadFilter(id) {
+  if (!id) return;
+  fetch('/filters').then(r => r.json()).then(data => {
+    const f = data.filters.find(f => f.id == id);
+    if (f) window.location.href = '/?' + f.params;
+  });
+}
+function showSaveModal() {
+  document.getElementById('filter-name').value = '';
+  bootstrap.Modal.getOrCreateInstance('#saveFilterModal').show();
+}
+async function saveFilter() {
+  const name = document.getElementById('filter-name').value.trim();
+  if (!name) return;
+  const params = window.location.search.replace(/^\?/, '');
+  await fetch('/save-filter', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, params}),
+  });
+  bootstrap.Modal.getInstance('#saveFilterModal').hide();
+  loadFilters();
+}
+document.addEventListener('DOMContentLoaded', loadFilters);
 function toggleAll(master, name) {
   document.querySelectorAll(`input[type="checkbox"][name="${name}"]`).forEach(cb => cb.checked = master.checked);
 }

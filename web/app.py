@@ -14,7 +14,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from sqlalchemy import func
-from models import CarListing, IgnoredListing, FavoriteListing, get_session, init_db
+from models import CarListing, IgnoredListing, FavoriteListing, SavedFilter, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -562,6 +562,45 @@ def scrape_log():
     if not content.strip():
         return Response("Aguardando scraper iniciar...\n", mimetype="text/plain")
     return Response(content, mimetype="text/plain", headers={"Cache-Control": "no-cache"})
+
+
+@app.route("/save-filter", methods=["POST"])
+def save_filter():
+    data = request.get_json()
+    name = (data or {}).get("name", "").strip()
+    params = (data or {}).get("params", "")
+    if not name or not params:
+        return ("", 400)
+    session = get_session()
+    try:
+        session.add(SavedFilter(name=name, params=params))
+        session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
+@app.route("/delete-filter/<int:fid>", methods=["POST"])
+def delete_filter(fid):
+    session = get_session()
+    try:
+        f = session.get(SavedFilter, fid)
+        if f:
+            session.delete(f)
+            session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
+@app.route("/filters")
+def list_filters():
+    session = get_session()
+    try:
+        filters = session.query(SavedFilter).order_by(SavedFilter.created_at.desc()).all()
+        return {"filters": [{"id": f.id, "name": f.name, "params": f.params} for f in filters]}
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":
