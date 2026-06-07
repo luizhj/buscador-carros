@@ -75,7 +75,7 @@ def index():
     session = get_session()
     try:
         # -- filtros universais (não auto-excludentes) --
-        q_base = session.query(CarListing)
+        q_base = session.query(CarListing).filter(CarListing.status == "active")
         if s := request.args.get("q"):
             q_base = q_base.filter(CarListing.title.ilike(f"%{s}%"))
         if p_min := _int_or_none(request.args.get("price_min")):
@@ -130,6 +130,8 @@ def index():
             q = q.filter(CarListing.year <= y_max)
         if km_max:
             q = q.filter(CarListing.mileage <= km_max)
+        if request.args.get("novos"):
+            q = q.filter(func.abs(func.julianday(CarListing.created_at) - func.julianday(CarListing.updated_at)) < 0.00001)
 
         sort = request.args.get("sort", "")
         order = CarListing.created_at.desc()
@@ -144,13 +146,21 @@ def index():
         elif sort == "km_asc":
             order = CarListing.mileage.asc().nullslast()
 
-        base_listings_q = q.filter(CarListing.olx_id.isnot(None)).order_by(order)
+        base_listings_q = q.filter(CarListing.olx_id.isnot(None), CarListing.status == "active").order_by(order)
         page = _int_or_none(request.args.get("page")) or 1
         page = max(page, 1)
         per_page = 50
         total = base_listings_q.count()
         listings = base_listings_q.offset((page - 1) * per_page).limit(per_page).all()
         total_pages = max((total + per_page - 1) // per_page, 1)
+
+        from datetime import timedelta
+        _new_ids = set()
+        for ad in listings:
+            if ad.created_at and ad.updated_at:
+                delta = abs((ad.created_at - ad.updated_at).total_seconds())
+                if delta < 1:
+                    _new_ids.add(ad.olx_id)
 
         # -- available_* usam q_base + filtros relevantes (EXCETO o próprio) --
         def _excl(bq, *excluded):
@@ -270,6 +280,7 @@ def index():
             selected_motorpowers=motorpower_filter,
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
+            new_ids=_new_ids,
             sort=sort,
             page=page,
             total_pages=total_pages,

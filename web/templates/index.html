@@ -221,6 +221,9 @@
           <div class="col-md-2">
             <button type="button" id="ignore-selected" class="btn btn-outline-danger w-100">Ignorar selecionados</button>
           </div>
+          <div class="col-md-2">
+            <a href="{% if request.args.get('novos') %}/{% else %}?novos=1{% endif %}" class="btn btn-outline-success w-100">{% if request.args.get('novos') %}Todos{% else %}Apenas novos{% endif %}</a>
+          </div>
         </div>
       </div>
 
@@ -242,7 +245,7 @@
           </thead>
           <tbody>
             {% for ad in listings %}
-            <tr>
+            <tr{% if ad.olx_id in new_ids %} class="table-success"{% endif %}>
               <td><input type="checkbox" name="select_listing" value="{{ ad.id }}" class="form-check-input" style="margin-top:8px;"></td>
               <td style="text-align:center;vertical-align:middle;">
                 <button type="button" class="btn btn-sm p-0 border-0 fs-5" onclick="toggleFav({{ ad.id }})"
@@ -255,7 +258,7 @@
                 <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
                 {% endif %}
               </td>
-              <td style="white-space:normal">{{ ad.title }}</td>
+              <td style="white-space:normal">{{ ad.title }}{% if ad.olx_id in new_ids %} <span class="badge bg-success" style="font-size:0.7em;">Novo</span>{% endif %}</td>
               <td style="white-space:nowrap">{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
               <td>{{ ad.year }}</td>
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>

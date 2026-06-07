@@ -38,6 +38,7 @@ class CarListing(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    status = Column(String, default="active")
 
 
 class IgnoredListing(Base):
