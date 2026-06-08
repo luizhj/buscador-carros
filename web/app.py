@@ -510,6 +510,18 @@ def restore_active(listing_id):
     return redirect(request.referrer or "/excluidos")
 
 
+@app.route("/restore-active-batch", methods=["POST"])
+def restore_active_batch():
+    ids = [int(v) for v in request.form.getlist("listing_id") if v.isdigit()]
+    session = get_session()
+    try:
+        session.query(CarListing).filter(CarListing.id.in_(ids)).update({"status": "active"}, synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
 @app.route("/ignorados")
 def ignored_listings():
     session = get_session()
