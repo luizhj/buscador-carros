@@ -54,6 +54,20 @@ def img_proxy():
     return Response(resp.read(), content_type=resp.headers.get("Content-Type", "image/jpeg"))
 
 
+def _last_scrape_result():
+    from datetime import datetime as dt, timezone as tz
+    try:
+        with open(SCRAPE_RESULT_FILE) as f:
+            data = json.load(f)
+        finished = dt.fromisoformat(data["finished_at"])
+        elapsed = (dt.now(tz=tz.utc) - finished).total_seconds()
+        if elapsed > 30:
+            return None
+        return data
+    except Exception:
+        return None
+
+
 def _sort_selected_first(items, selected):
     selected_set = set(selected)
     if items and isinstance(items[0], tuple) and len(items[0]) == 3:
@@ -281,6 +295,7 @@ def index():
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
             new_ids=_new_ids,
+            scrape_result=_last_scrape_result(),
             sort=sort,
             page=page,
             total_pages=total_pages,
@@ -587,10 +602,27 @@ LOG_FILE = os.path.join(_project_root, "scrape.log")
 
 CIDADES_PATH = os.path.join(_project_root, "cidades_permitidas.json")
 CURRENT_URL_FILE = os.path.join(_project_root, ".current_url")
+SCRAPE_RESULT_FILE = os.path.join(_project_root, ".last_scrape.json")
+
+
+def _save_scrape_result(start_time):
+    """Lê o log e salva resultado da última execução."""
+    import re
+    try:
+        with open(LOG_FILE) as f:
+            text = f.read()
+        m = re.search(r"Done! Scraped (\d+) listings total\.", text)
+        count = int(m.group(1)) if m else 0
+        elapsed = round((datetime.now(timezone.utc) - start_time).total_seconds())
+        with open(SCRAPE_RESULT_FILE, "w") as f:
+            json.dump({"count": count, "finished_at": datetime.now(timezone.utc).isoformat(), "elapsed": elapsed}, f)
+    except Exception:
+        pass
 
 
 def _run_scraper_background(url, cidades):
     """Roda o scraper em background escrevendo log em arquivo."""
+    _start = datetime.now(timezone.utc)
     with open(CIDADES_PATH, "w") as f:
         json.dump(cidades, f, indent=2, ensure_ascii=False)
     from clear_db import clear_db
@@ -609,10 +641,12 @@ def _run_scraper_background(url, cidades):
             text=True, cwd=_project_root, env=env,
         )
         proc.wait()
+    _save_scrape_result(_start)
 
 
 def _run_scraper_background_noclear(url, cidades):
     """Roda o scraper em background sem limpar o banco."""
+    _start = datetime.now(timezone.utc)
     with open(CIDADES_PATH, "w") as f:
         json.dump(cidades, f, indent=2, ensure_ascii=False)
     with open(CURRENT_URL_FILE, "w") as f:
@@ -628,6 +662,7 @@ def _run_scraper_background_noclear(url, cidades):
             text=True, cwd=_project_root, env=env,
         )
         proc.wait()
+    _save_scrape_result(_start)
 
 
 @app.route("/clear-all", methods=["POST"])

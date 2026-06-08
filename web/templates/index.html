@@ -310,6 +310,15 @@
     </div>
   </form>
 </div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="scrapeToast" class="toast" role="alert">
+    <div class="toast-header">
+      <strong class="me-auto">Scraper</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="scrapeToastBody"></div>
+  </div>
+</div>
 <div class="modal fade" id="editModal" tabindex="-1">
   <form method="POST" id="editForm">
     <div class="modal-dialog modal-sm">
@@ -476,6 +485,13 @@ document.getElementById('editForm').onsubmit = async function(e) {
   bootstrap.Modal.getInstance('#editModal').hide();
   window.location.reload();
 };
+{% if scrape_result %}
+document.addEventListener('DOMContentLoaded', function() {
+  const body = document.getElementById('scrapeToastBody');
+  body.textContent = 'Scraping finalizado — ' + {{ scrape_result.count }} + ' anúncios processados em ' + {{ scrape_result.elapsed }} + 's';
+  bootstrap.Toast.getOrCreateInstance('#scrapeToast').show();
+});
+{% endif %}
 </script>
 </body>
 </html>

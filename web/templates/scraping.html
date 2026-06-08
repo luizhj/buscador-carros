@@ -17,13 +17,23 @@
     <div id="bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
   </div>
   <p class="mt-2 text-muted small" id="counter"></p>
+  <p class="text-muted small" id="timer">00:00</p>
 </div>
 <script>
 const bar = document.getElementById('bar');
 const status = document.getElementById('status');
 const counter = document.getElementById('counter');
+const timer = document.getElementById('timer');
+const startTime = Date.now();
 let lastLen = 0;
 let totalAds = 0;
+
+setInterval(() => {
+  const s = Math.floor((Date.now() - startTime) / 1000);
+  const m = String(Math.floor(s / 60)).padStart(2, '0');
+  const seg = String(s % 60).padStart(2, '0');
+  timer.textContent = m + ':' + seg;
+}, 1000);
 
 async function poll() {
   const resp = await fetch('/scrape-log');
