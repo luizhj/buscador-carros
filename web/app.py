@@ -497,7 +497,7 @@ def excluded_listings():
         session.close()
 
 
-@app.route("/restore-active/<int:listing_id>")
+@app.route("/restore-active/<int:listing_id>", methods=["GET", "POST"])
 def restore_active(listing_id):
     session = get_session()
     try:
