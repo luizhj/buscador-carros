@@ -360,9 +360,9 @@ def todos_modelos():
         transmissions = [r[0] for r in _base.with_entities(CarListing.transmission).filter(CarListing.transmission.isnot(None)).distinct().order_by(CarListing.transmission).all() if r[0]]
         seller_types = [r[0] for r in _base.with_entities(CarListing.seller_type).filter(CarListing.seller_type.isnot(None)).distinct().order_by(CarListing.seller_type).all() if r[0]]
         extra = {}
-        if cartype: extra["cartype"] = cartype
-        if motorpower: extra["motorpower"] = motorpower
-        if transmission: extra["transmission"] = transmission
+        if cartype: extra["cartype_filter"] = cartype
+        if motorpower: extra["motorpower_filter"] = motorpower
+        if transmission: extra["gearbox_filter"] = transmission
         if seller_type: extra["seller_type"] = seller_type
         return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype,
                                motorpowers=motorpowers, motorpower=motorpower,
