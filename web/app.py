@@ -313,14 +313,20 @@ def todos_modelos():
     session = get_session()
     try:
         _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
-        rows = (
-            session.query(CarListing.brand, CarListing.model, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None), CarListing.model.isnot(None), ~CarListing.olx_id.in_(_ignored))
-            .group_by(CarListing.brand, CarListing.model)
-            .order_by(CarListing.brand, CarListing.model)
-            .all()
+        cartype = request.args.get("cartype", "")
+        q = session.query(CarListing.brand, CarListing.model, func.count(CarListing.id)).filter(
+            CarListing.brand.isnot(None), CarListing.model.isnot(None),
+            CarListing.status == "active",
+            ~CarListing.olx_id.in_(_ignored),
         )
-        return render_template("todos_modelos.html", modelos=rows)
+        if cartype:
+            q = q.filter(CarListing.cartype == cartype)
+        rows = q.group_by(CarListing.brand, CarListing.model).order_by(CarListing.brand, CarListing.model).all()
+        cartypes = [r[0] for r in session.query(CarListing.cartype).filter(
+            CarListing.cartype.isnot(None), CarListing.status == "active",
+            ~CarListing.olx_id.in_(_ignored),
+        ).distinct().order_by(CarListing.cartype).all() if r[0]]
+        return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype)
     finally:
         session.close()
 
