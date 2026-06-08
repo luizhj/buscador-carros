@@ -65,16 +65,24 @@
       <option value="{{ tr }}" {% if tr == transmission %}selected{% endif %}>{{ tr }}</option>
       {% endfor %}
     </select>
+    <select class="form-select" style="width:auto;display:inline-block;" onchange="filtro()" id="filtro-vendedor">
+      <option value="">Todos vendedores</option>
+      {% for st in seller_types %}
+      <option value="{{ st }}" {% if st == seller_type %}selected{% endif %}>{{ st | capitalize }}</option>
+      {% endfor %}
+    </select>
   </div>
   <script>
   function filtro() {
     const t = document.getElementById('filtro-tipo').value;
     const m = document.getElementById('filtro-motor').value;
     const c = document.getElementById('filtro-cambio').value;
+    const v = document.getElementById('filtro-vendedor').value;
     const params = new URLSearchParams();
     if (t) params.set('cartype', t);
     if (m) params.set('motorpower', m);
     if (c) params.set('transmission', c);
+    if (v) params.set('seller_type', v);
     const qs = params.toString();
     window.location.href = '/modelos' + (qs ? '?' + qs : '');
   }

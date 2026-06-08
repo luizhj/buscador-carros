@@ -339,6 +339,7 @@ def todos_modelos():
         cartype = request.args.get("cartype", "")
         motorpower = request.args.get("motorpower", "")
         transmission = request.args.get("transmission", "")
+        seller_type = request.args.get("seller_type", "")
         q = session.query(CarListing.brand, CarListing.model, func.count(CarListing.id)).filter(
             CarListing.brand.isnot(None), CarListing.model.isnot(None),
             CarListing.status == "active",
@@ -350,14 +351,18 @@ def todos_modelos():
             q = q.filter(CarListing.motorpower == motorpower)
         if transmission:
             q = q.filter(CarListing.transmission == transmission)
+        if seller_type:
+            q = q.filter(CarListing.seller_type == seller_type)
         rows = q.group_by(CarListing.brand, CarListing.model).order_by(CarListing.brand, CarListing.model).all()
         _base = session.query(CarListing).filter(CarListing.status == "active", ~CarListing.olx_id.in_(_ignored))
         cartypes = [r[0] for r in _base.with_entities(CarListing.cartype).filter(CarListing.cartype.isnot(None)).distinct().order_by(CarListing.cartype).all() if r[0]]
         motorpowers = [r[0] for r in _base.with_entities(CarListing.motorpower).filter(CarListing.motorpower.isnot(None)).distinct().order_by(CarListing.motorpower).all() if r[0]]
         transmissions = [r[0] for r in _base.with_entities(CarListing.transmission).filter(CarListing.transmission.isnot(None)).distinct().order_by(CarListing.transmission).all() if r[0]]
+        seller_types = [r[0] for r in _base.with_entities(CarListing.seller_type).filter(CarListing.seller_type.isnot(None)).distinct().order_by(CarListing.seller_type).all() if r[0]]
         return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype,
                                motorpowers=motorpowers, motorpower=motorpower,
-                               transmissions=transmissions, transmission=transmission)
+                               transmissions=transmissions, transmission=transmission,
+                               seller_types=seller_types, seller_type=seller_type)
     finally:
         session.close()
 
