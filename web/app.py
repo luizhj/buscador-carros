@@ -101,6 +101,7 @@ def index():
         city_txt = request.args.get("city")
         city_check = request.args.getlist("city_check")
         neighborhood_check = request.args.getlist("neighborhood_check")
+        seller_type_filter = request.args.getlist("seller_type")
         cartype_filter = request.args.getlist("cartype_filter")
         motorpower_filter = request.args.getlist("motorpower_filter")
         gearbox_filter = request.args.getlist("gearbox_filter")
@@ -132,6 +133,8 @@ def index():
             q = q.filter(CarListing.transmission.in_(gearbox_filter))
         if year_filter:
             q = q.filter(CarListing.year.in_(year_filter))
+        if seller_type_filter:
+            q = q.filter(CarListing.seller_type.in_(seller_type_filter))
         if y_min:
             q = q.filter(CarListing.year >= y_min)
         if y_max:
@@ -193,6 +196,8 @@ def index():
                 r = r.filter(CarListing.motorpower.in_(motorpower_filter))
             if gearbox_filter and "gearbox" not in excluded:
                 r = r.filter(CarListing.transmission.in_(gearbox_filter))
+            if seller_type_filter and "seller_type" not in excluded:
+                r = r.filter(CarListing.seller_type.in_(seller_type_filter))
             if year_filter and "year" not in excluded:
                 r = r.filter(CarListing.year.in_(year_filter))
             if y_min and "year" not in excluded:
@@ -267,6 +272,13 @@ def index():
             .order_by(CarListing.year.desc())
             .all()
         )
+        available_seller_types = (
+            _excl(q_base, "seller_type").with_entities(CarListing.seller_type, func.count(CarListing.id))
+            .filter(CarListing.seller_type.isnot(None))
+            .group_by(CarListing.seller_type)
+            .order_by(CarListing.seller_type)
+            .all()
+        )
 
         return render_template(
             "index.html",
@@ -284,10 +296,12 @@ def index():
             available_motorpowers=_sort_selected_first(available_motorpowers, motorpower_filter),
             available_gearboxes=_sort_selected_first(available_gearboxes, gearbox_filter),
             available_years=_sort_selected_first(available_years, year_filter),
+            available_seller_types=_sort_selected_first(available_seller_types, seller_type_filter),
             selected_cartypes=cartype_filter,
             selected_motorpowers=motorpower_filter,
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
+            selected_seller_types=seller_type_filter,
             new_ids=_new_ids,
             scrape_result=_last_scrape_result(),
             sort=sort,

@@ -127,6 +127,20 @@
         </div>
       </div>
       <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#seller-collapse" aria-expanded="true">
+          Tipo de vendedor <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="seller-collapse" style="max-height: 120px; overflow-y: auto;">
+          {% for val, count in available_seller_types %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="seller_type" value="{{ val }}" id="st-{{ loop.index }}"
+              {% if val in selected_seller_types %}checked{% endif %}>
+            <label class="form-check-label" for="st-{{ loop.index }}">{{ val | capitalize }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
         <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#motor-collapse" aria-expanded="true">
           Motor <span class="float-end">&minus;</span>
         </div>
