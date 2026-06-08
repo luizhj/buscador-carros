@@ -23,6 +23,7 @@
           <th style="width:10%">KM</th>
           <th style="width:15%">Cidade</th>
           <th style="width:5%">Link</th>
+          <th style="width:5%">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -40,6 +41,7 @@
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
           <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
           <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
+          <td><a href="/restore-active/{{ ad.id }}" class="btn btn-success btn-sm" onclick="return confirm('Restaurar este anúncio?')">Restaurar</a></td>
         </tr>
         {% endfor %}
         {% if not listings %}

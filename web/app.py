@@ -497,6 +497,19 @@ def excluded_listings():
         session.close()
 
 
+@app.route("/restore-active/<int:listing_id>")
+def restore_active(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing:
+            listing.status = "active"
+            session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/excluidos")
+
+
 @app.route("/ignorados")
 def ignored_listings():
     session = get_session()
