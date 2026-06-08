@@ -48,6 +48,7 @@ class CarItem(scrapy.Item):
     neighborhood = scrapy.Field()
     zip_code = scrapy.Field()
     seller_name = scrapy.Field()
+    seller_type = scrapy.Field()
     brand = scrapy.Field()
     model = scrapy.Field()
     city = scrapy.Field()
@@ -246,6 +247,7 @@ class OlxSpider(scrapy.Spider):
             neighborhood=neighborhood,
             zip_code=props.get("cep"),
             seller_name=seller_name,
+            seller_type="profissional" if ad.get("professionalAd") else "particular",
             city=city,
             state=state,
             image_urls=json.dumps(image_urls) if image_urls else None,
