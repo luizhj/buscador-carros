@@ -371,6 +371,29 @@ def ignore_listing(listing_id):
     return redirect(request.referrer or "/")
 
 
+EDITABLE_FIELDS = ["brand", "model", "cartype", "motorpower", "transmission"]
+
+
+@app.route("/edit/<int:listing_id>", methods=["POST"])
+def edit_listing(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing:
+            edited = []
+            for f in EDITABLE_FIELDS:
+                val = request.form.get(f, "").strip() or None
+                if val != getattr(listing, f):
+                    setattr(listing, f, val)
+                    edited.append(f)
+            listing.notes = request.form.get("notes", "").strip() or None
+            listing.edited = json.dumps(edited) if edited else listing.edited
+            session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/")
+
+
 @app.route("/favorite/<int:listing_id>", methods=["POST"])
 def favorite_listing(listing_id):
     session = get_session()

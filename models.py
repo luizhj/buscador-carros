@@ -39,6 +39,8 @@ class CarListing(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
     status = Column(String, default="active")
+    edited = Column(Text, default=None)
+    notes = Column(Text, default=None)
 
 
 class IgnoredListing(Base):

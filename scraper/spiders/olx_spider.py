@@ -72,7 +72,10 @@ class DatabasePipeline:
                 return item
             existing = session.query(CarListing).filter_by(olx_id=olx_id).first()
             if existing:
+                edited_fields = json.loads(existing.edited) if existing.edited else []
                 for key in item.fields:
+                    if key in edited_fields:
+                        continue
                     val = item.get(key)
                     if val is not None:
                         setattr(existing, key, val)

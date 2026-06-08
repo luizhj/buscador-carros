@@ -259,13 +259,23 @@
                 <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
                 {% endif %}
               </td>
-              <td style="white-space:normal">{{ ad.title }}{% if ad.olx_id in new_ids %} <span class="badge bg-success" style="font-size:0.7em;">Novo</span>{% endif %}</td>
+              <td style="white-space:normal">{{ ad.title }}{% if ad.notes %} 📝{% endif %}{% if ad.olx_id in new_ids %} <span class="badge bg-success" style="font-size:0.7em;">Novo</span>{% endif %}</td>
               <td style="white-space:nowrap">{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
               <td>{{ ad.year }}</td>
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
               <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
-              <td><a href="/ignore/{{ ad.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Ignorar este anúncio? Ele não aparecerá mais nas listas.')">Ignorar</a></td>
+              <td style="white-space:nowrap">
+                <button type="button" class="btn btn-outline-info btn-sm" onclick="openEdit(this)"
+                  data-id="{{ ad.id }}"
+                  data-brand="{{ ad.brand or '' }}"
+                  data-model="{{ ad.model or '' }}"
+                  data-cartype="{{ ad.cartype or '' }}"
+                  data-motor="{{ ad.motorpower or '' }}"
+                  data-trans="{{ ad.transmission or '' }}"
+                  data-notes="{{ ad.notes or '' }}">Editar</button>
+                <a href="/ignore/{{ ad.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Ignorar este anúncio? Ele não aparecerá mais nas listas.')">Ignorar</a>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -296,6 +306,48 @@
           </ul>
           <p class="text-muted text-center small mb-0">{{ total }} anúncio{{ 's' if total != 1 }} — página {{ page }} de {{ total_pages }}</p>
         </nav>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="modal fade" id="editModal" tabindex="-1">
+  <form method="POST" id="editForm">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title">Editar Anúncio</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-id">
+          <div class="mb-2">
+            <label class="form-label small">Marca</label>
+            <input name="brand" id="edit-brand" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Modelo</label>
+            <input name="model" id="edit-model" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Tipo</label>
+            <input name="cartype" id="edit-cartype" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Motor</label>
+            <input name="motorpower" id="edit-motor" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Câmbio</label>
+            <input name="transmission" id="edit-trans" class="form-control form-control-sm">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Observação</label>
+            <textarea name="notes" id="edit-notes" class="form-control form-control-sm" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+        </div>
       </div>
     </div>
   </form>
@@ -374,6 +426,25 @@ document.getElementById('ignore-selected').onclick = async function() {
   const fd = new FormData();
   ids.forEach(id => fd.append('listing_id', id));
   await fetch('/ignore-batch', { method: 'POST', body: fd });
+  window.location.reload();
+};
+function openEdit(btn) {
+  const d = btn.dataset;
+  document.getElementById('edit-id').value = d.id;
+  document.getElementById('edit-brand').value = d.brand;
+  document.getElementById('edit-model').value = d.model;
+  document.getElementById('edit-cartype').value = d.cartype;
+  document.getElementById('edit-motor').value = d.motor;
+  document.getElementById('edit-trans').value = d.trans;
+  document.getElementById('edit-notes').value = d.notes;
+  bootstrap.Modal.getOrCreateInstance('#editModal').show();
+}
+document.getElementById('editForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('edit-id').value;
+  const fd = new FormData(this);
+  await fetch('/edit/' + id, { method: 'POST', body: fd });
+  bootstrap.Modal.getInstance('#editModal').hide();
   window.location.reload();
 };
 </script>
