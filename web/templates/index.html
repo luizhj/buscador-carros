@@ -18,10 +18,12 @@
           <p class="text-muted small mb-1">Último scrape: {{ scrape_result.finished_at[:16] | replace('T', ' ') }} — {{ scrape_result.count }} anúncios em {{ '{:02d}:{:02d}'.format(scrape_result.elapsed // 60, scrape_result.elapsed % 60) }}</p>
           {% endif %}
           <div class="d-flex gap-1 mb-1">
-            <select id="saved-filters" class="form-select form-select-sm" onchange="loadFilter(this.value)">
+            <select id="saved-filters" class="form-select form-select-sm" onchange="onFilterSelect()">
               <option value="">Filtros salvos...</option>
             </select>
-            <button class="btn btn-outline-primary btn-sm" onclick="showSaveModal()" title="Salvar filtro atual">+</button>
+            <button type="button" id="load-filter-btn" class="btn btn-outline-success btn-sm" style="display:none;" onclick="loadFilter()" title="Carregar filtro">▶</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="showSaveModal()" title="Salvar filtro atual">+</button>
+            <button type="button" id="delete-filter-btn" class="btn btn-outline-danger btn-sm" style="display:none;" onclick="deleteFilter()" title="Excluir filtro">✕</button>
           </div>
           <div class="d-grid gap-1">
             <a href="/marcas" class="btn btn-outline-info btn-sm">Marcas</a>
@@ -427,13 +429,32 @@ async function loadFilters() {
     opt.textContent = f.name;
     sel.appendChild(opt);
   });
+  document.getElementById('load-filter-btn').style.display = 'none';
+  document.getElementById('delete-filter-btn').style.display = 'none';
 }
-function loadFilter(id) {
+function onFilterSelect() {
+  const sel = document.getElementById('saved-filters');
+  const id = sel.value;
+  document.getElementById('load-filter-btn').style.display = id ? 'inline-block' : 'none';
+  document.getElementById('delete-filter-btn').style.display = id ? 'inline-block' : 'none';
+  document.getElementById('delete-filter-btn').dataset.filterId = id;
+}
+function loadFilter() {
+  const id = document.getElementById('saved-filters').value;
   if (!id) return;
   fetch('/filters').then(r => r.json()).then(data => {
     const f = data.filters.find(f => f.id == id);
     if (f) window.location.href = '/?' + f.params;
   });
+}
+async function deleteFilter() {
+  const id = document.getElementById('delete-filter-btn').dataset.filterId;
+  if (!id || !confirm('Excluir este filtro?')) return;
+  await fetch('/delete-filter/' + id, { method: 'POST' });
+  document.getElementById('delete-filter-btn').style.display = 'none';
+  document.getElementById('load-filter-btn').style.display = 'none';
+  document.getElementById('saved-filters').value = '';
+  loadFilters();
 }
 function showSaveModal() {
   document.getElementById('filter-name').value = '';
