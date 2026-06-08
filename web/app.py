@@ -61,7 +61,7 @@ def _last_scrape_result():
             data = json.load(f)
         finished = dt.fromisoformat(data["finished_at"])
         elapsed = (dt.now(tz=tz.utc) - finished).total_seconds()
-        if elapsed > 300:
+        if elapsed > 999999:
             return None
         return data
     except Exception:
@@ -633,7 +633,7 @@ def _run_scraper_background(url, cidades):
         f.write(f"URL: {url}\n")
         f.write(f"Banco limpo ({removed} registros removidos)\n\n")
         f.flush()
-    env = {**os.environ, "SCRAPE_URL": url}
+    env = {**os.environ, "SCRAPE_URL": url, "SCRAPE_START": _start.isoformat()}
     with open(LOG_FILE, "a") as f:
         proc = subprocess.Popen(
             [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],
@@ -654,7 +654,7 @@ def _run_scraper_background_noclear(url, cidades):
     with open(LOG_FILE, "w") as f:
         f.write(f"URL: {url}\nAtualizando anúncios existentes...\n\n")
         f.flush()
-    env = {**os.environ, "SCRAPE_URL": url}
+    env = {**os.environ, "SCRAPE_URL": url, "SCRAPE_START": _start.isoformat()}
     with open(LOG_FILE, "a") as f:
         proc = subprocess.Popen(
             [sys.executable, "-u", os.path.join(_project_root, "run_scraper.py")],

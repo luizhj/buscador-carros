@@ -54,3 +54,17 @@ if deleted:
     print(f"  Marcados {len(deleted)} como excluídos (não encontrados)")
 
 print(f"\nDone! Scraped {seen} listings total.")
+
+# salva resultado para exibição na web
+import json
+from datetime import datetime, timezone
+result = {"count": seen, "finished_at": datetime.now(timezone.utc).isoformat(), "elapsed": 0}
+# tenta calcular elapsed aproximado
+try:
+    start = os.environ.get("SCRAPE_START")
+    if start:
+        result["elapsed"] = round((datetime.now(timezone.utc) - datetime.fromisoformat(start)).total_seconds())
+except Exception:
+    pass
+with open(os.path.join(os.path.dirname(__file__), ".last_scrape.json"), "w") as f:
+    json.dump(result, f)

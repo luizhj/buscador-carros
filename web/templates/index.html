@@ -14,6 +14,9 @@
     <div class="col-md-3 mb-3">
       <div class="card shadow-sm mb-2">
         <div class="card-body py-2">
+          {% if scrape_result %}
+          <p class="text-muted small mb-1">Último scrape: {{ scrape_result.finished_at[:16] | replace('T', ' ') }} — {{ scrape_result.count }} anúncios em {{ '{:02d}:{:02d}'.format(scrape_result.elapsed // 60, scrape_result.elapsed % 60) }}</p>
+          {% endif %}
           <div class="d-flex gap-1 mb-1">
             <select id="saved-filters" class="form-select form-select-sm" onchange="loadFilter(this.value)">
               <option value="">Filtros salvos...</option>
@@ -227,9 +230,6 @@
         </div>
       </div>
 
-      {% if scrape_result %}
-      <p class="text-muted small mb-1">Último scrape: {{ scrape_result.finished_at[:16] | replace('T', ' ') }} — {{ scrape_result.count }} anúncios em {{ scrape_result.elapsed }}s</p>
-      {% endif %}
       <p class="text-muted mb-1">{{ total }} anúncio{{ 's' if total != 1 }} encontrado{{ 's' if total != 1 }}</p>
       <div class="table-responsive">
         <table class="table table-striped table-hover bg-white rounded shadow-sm">
