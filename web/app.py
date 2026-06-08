@@ -482,6 +482,21 @@ def favoritos():
         session.close()
 
 
+@app.route("/excluidos")
+def excluded_listings():
+    session = get_session()
+    try:
+        _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+        q = session.query(CarListing).filter(
+            CarListing.status == "deleted",
+            ~CarListing.olx_id.in_(_ignored),
+        ).order_by(CarListing.updated_at.desc())
+        listings = q.all()
+        return render_template("excluidos.html", listings=listings)
+    finally:
+        session.close()
+
+
 @app.route("/ignorados")
 def ignored_listings():
     session = get_session()
