@@ -39,13 +39,9 @@ async function poll() {
     const m = lastLine.match(/Scraped (\d+) items/);
     if (m) {
       const n = parseInt(m[1]);
-      const pct = totalAds ? Math.min(Math.round(n / totalAds * 100), 99) : 0;
+      const pct = totalAds ? Math.min(Math.round(n / totalAds * 100), 100) : 0;
       bar.style.width = Math.max(pct, 1) + '%';
-      if (totalAds && n <= totalAds) {
-        counter.textContent = n + ' anúncios baixados de ' + totalAds;
-      } else {
-        counter.textContent = n + ' anúncios baixados';
-      }
+      counter.textContent = totalAds ? n + ' anúncios baixados de ' + totalAds : n + ' anúncios baixados';
     }
   }
   if (text.includes('Done!')) {
