@@ -61,7 +61,7 @@ def _last_scrape_result():
             data = json.load(f)
         finished = dt.fromisoformat(data["finished_at"])
         elapsed = (dt.now(tz=tz.utc) - finished).total_seconds()
-        if elapsed > 30:
+        if elapsed > 300:
             return None
         return data
     except Exception:

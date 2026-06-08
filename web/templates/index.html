@@ -227,6 +227,9 @@
         </div>
       </div>
 
+      {% if scrape_result %}
+      <p class="text-muted small mb-1">Último scrape: {{ scrape_result.finished_at[:16] | replace('T', ' ') }} — {{ scrape_result.count }} anúncios em {{ scrape_result.elapsed }}s</p>
+      {% endif %}
       <p class="text-muted mb-1">{{ total }} anúncio{{ 's' if total != 1 }} encontrado{{ 's' if total != 1 }}</p>
       <div class="table-responsive">
         <table class="table table-striped table-hover bg-white rounded shadow-sm">
@@ -309,15 +312,6 @@
       </div>
     </div>
   </form>
-</div>
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
-  <div id="scrapeToast" class="toast" role="alert">
-    <div class="toast-header">
-      <strong class="me-auto">Scraper</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-    </div>
-    <div class="toast-body" id="scrapeToastBody"></div>
-  </div>
 </div>
 <div class="modal fade" id="editModal" tabindex="-1">
   <form method="POST" id="editForm">
@@ -485,13 +479,6 @@ document.getElementById('editForm').onsubmit = async function(e) {
   bootstrap.Modal.getInstance('#editModal').hide();
   window.location.reload();
 };
-{% if scrape_result %}
-document.addEventListener('DOMContentLoaded', function() {
-  const body = document.getElementById('scrapeToastBody');
-  body.textContent = 'Scraping finalizado — ' + {{ scrape_result.count }} + ' anúncios processados em ' + {{ scrape_result.elapsed }} + 's';
-  bootstrap.Toast.getOrCreateInstance('#scrapeToast').show();
-});
-{% endif %}
 </script>
 </body>
 </html>
