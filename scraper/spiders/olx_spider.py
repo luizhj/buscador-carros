@@ -208,8 +208,10 @@ class OlxSpider(scrapy.Spider):
         if len(parts) > 1:
             # descobre onde começa o modelo (pula palavras extras da marca)
             idx = 1
-            if parts[0] != brand and len(parts) > 2:
-                idx = 2
+            for i, p in enumerate(parts):
+                if p.lower() == brand.lower():
+                    idx = i + 1
+                    break
             _suffixes = {"motors", "do", "das", "dos", "da"}
             while idx < len(parts) and parts[idx].lower() in _suffixes:
                 idx += 1
