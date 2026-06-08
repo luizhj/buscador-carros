@@ -314,6 +314,8 @@ def todos_modelos():
     try:
         _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         cartype = request.args.get("cartype", "")
+        motorpower = request.args.get("motorpower", "")
+        transmission = request.args.get("transmission", "")
         q = session.query(CarListing.brand, CarListing.model, func.count(CarListing.id)).filter(
             CarListing.brand.isnot(None), CarListing.model.isnot(None),
             CarListing.status == "active",
@@ -321,12 +323,18 @@ def todos_modelos():
         )
         if cartype:
             q = q.filter(CarListing.cartype == cartype)
+        if motorpower:
+            q = q.filter(CarListing.motorpower == motorpower)
+        if transmission:
+            q = q.filter(CarListing.transmission == transmission)
         rows = q.group_by(CarListing.brand, CarListing.model).order_by(CarListing.brand, CarListing.model).all()
-        cartypes = [r[0] for r in session.query(CarListing.cartype).filter(
-            CarListing.cartype.isnot(None), CarListing.status == "active",
-            ~CarListing.olx_id.in_(_ignored),
-        ).distinct().order_by(CarListing.cartype).all() if r[0]]
-        return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype)
+        _base = session.query(CarListing).filter(CarListing.status == "active", ~CarListing.olx_id.in_(_ignored))
+        cartypes = [r[0] for r in _base.with_entities(CarListing.cartype).filter(CarListing.cartype.isnot(None)).distinct().order_by(CarListing.cartype).all() if r[0]]
+        motorpowers = [r[0] for r in _base.with_entities(CarListing.motorpower).filter(CarListing.motorpower.isnot(None)).distinct().order_by(CarListing.motorpower).all() if r[0]]
+        transmissions = [r[0] for r in _base.with_entities(CarListing.transmission).filter(CarListing.transmission.isnot(None)).distinct().order_by(CarListing.transmission).all() if r[0]]
+        return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype,
+                               motorpowers=motorpowers, motorpower=motorpower,
+                               transmissions=transmissions, transmission=transmission)
     finally:
         session.close()
 
