@@ -8,3 +8,4 @@ car_listings.db
 venv/
 .current_url
 scrape.log
+.last_scrape.json
