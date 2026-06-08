@@ -115,7 +115,7 @@
         <div class="brand-name">{{ brand }}</div>
         {% set ns.current_brand = brand %}
       {% endif %}
-      <a href="/?model={{ model }}" class="model-item d-flex justify-content-between align-items-center">
+      <a href="/?model={{ model }}{% for k,v in model_extra.items() %}&{{ k }}={{ v }}{% endfor %}" class="model-item d-flex justify-content-between align-items-center">
         <span>{{ model }}</span>
         <span class="badge bg-secondary rounded-pill" style="font-size:0.75em;">{{ count }}</span>
       </a>
