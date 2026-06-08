@@ -64,9 +64,10 @@ document.getElementById('restore-selected').onclick = async function() {
   const ids = Array.from(checked).map(cb => cb.value).filter(Boolean);
   if (!ids.length) return;
   if (!confirm('Restaurar ' + ids.length + ' anúncio(s)?')) return;
-  const fd = new FormData();
-  ids.forEach(id => fd.append('listing_id', id));
-  await fetch('/restore-active-batch', { method: 'POST', body: fd });
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append('listing_id', id));
+  const r = await fetch('/restore-active-batch', { method: 'POST', body: params, headers: {'Content-Type': 'application/x-www-form-urlencoded'} });
+  if (!r.ok) { alert('Erro ao restaurar'); return; }
   window.location.reload();
 };
 </script>
