@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Run the OLX car scraper and save listings to SQLite."""
 import os
+import time
+from datetime import datetime, timezone
 from scraper.spiders.olx_spider import OlxSpider, DatabasePipeline
 from models import init_db, get_session, CarListing
 from config import START_URL
 
+_start_time = time.time()
 url = os.environ.get("SCRAPE_URL") or START_URL
 _current_file = os.path.join(os.path.dirname(__file__), ".current_url")
 if os.path.exists(_current_file):
@@ -53,18 +56,13 @@ if deleted:
     session2.close()
     print(f"  Marcados {len(deleted)} como excluídos (não encontrados)")
 
-print(f"\nDone! Scraped {seen} listings total.")
+_elapsed = round(time.time() - _start_time)
+_m = _elapsed // 60
+_s = _elapsed % 60
+print(f"\nDone! Scraped {seen} listings total. ({_m:02d}:{_s:02d})")
 
 # salva resultado para exibição na web
 import json
-from datetime import datetime, timezone
-result = {"count": seen, "finished_at": datetime.now(timezone.utc).isoformat(), "elapsed": 0}
-# tenta calcular elapsed aproximado
-try:
-    start = os.environ.get("SCRAPE_START")
-    if start:
-        result["elapsed"] = round((datetime.now(timezone.utc) - datetime.fromisoformat(start)).total_seconds())
-except Exception:
-    pass
+result = {"count": seen, "finished_at": datetime.now().astimezone().isoformat(), "elapsed": _elapsed}
 with open(os.path.join(os.path.dirname(__file__), ".last_scrape.json"), "w") as f:
     json.dump(result, f)
