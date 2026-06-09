@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from datetime import datetime, timezone
 import zipfile
 import io
 import subprocess
@@ -667,23 +668,21 @@ SCRAPE_RESULT_FILE = os.path.join(_project_root, ".last_scrape.json")
 def _save_scrape_result(start_time):
     """Lê o log e salva resultado da última execução."""
     import re
-    from datetime import timezone as tz
     try:
         with open(LOG_FILE) as f:
             text = f.read()
         m = re.search(r"Done! Scraped (\d+) listings total\.", text)
         count = int(m.group(1)) if m else 0
-        elapsed = round((datetime.now(tz=tz) - start_time).total_seconds())
+        elapsed = round((datetime.now(tz=timezone.utc) - start_time).total_seconds())
         with open(SCRAPE_RESULT_FILE, "w") as f:
-            json.dump({"count": count, "finished_at": datetime.now(tz=tz).isoformat(), "elapsed": elapsed}, f)
+            json.dump({"count": count, "finished_at": datetime.now(tz=timezone.utc).isoformat(), "elapsed": elapsed}, f)
     except Exception:
         pass
 
 
 def _run_scraper_background(url, cidades):
     """Roda o scraper em background escrevendo log em arquivo."""
-    from datetime import timezone as tz
-    _start = datetime.now(tz=tz)
+    _start = datetime.now(tz=timezone.utc)
     with open(CIDADES_PATH, "w") as f:
         json.dump(cidades, f, indent=2, ensure_ascii=False)
     from clear_db import clear_db
@@ -707,8 +706,7 @@ def _run_scraper_background(url, cidades):
 
 def _run_scraper_background_noclear(url, cidades):
     """Roda o scraper em background sem limpar o banco."""
-    from datetime import timezone as tz
-    _start = datetime.now(tz=tz)
+    _start = datetime.now(tz=timezone.utc)
     with open(CIDADES_PATH, "w") as f:
         json.dump(cidades, f, indent=2, ensure_ascii=False)
     with open(CURRENT_URL_FILE, "w") as f:
