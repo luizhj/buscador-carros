@@ -51,7 +51,7 @@
     <div class="card-header fw-bold text-danger">Zona de Perigo</div>
     <div class="card-body">
       <p class="text-muted small">Remove todos os anúncios baixados e a lista de ignorados.</p>
-      <form method="POST" action="/clear-all" onsubmit="return confirm('Tem certeza? Todos os anúncios e ignorados serão removidos permanentemente.')">
+      <form method="POST" action="/clear-all" onsubmit="return confirm('Tem certeza? Todos os anúncios, ignorados e favoritos serão removidos permanentemente.')">
         <button type="submit" class="btn btn-danger">Limpar tudo</button>
       </form>
       <form method="POST" action="/clear-keep-favs" onsubmit="return confirm('Tem certeza? Anúncios e ignorados serão removidos. Favoritos preservados.')" class="mt-2">

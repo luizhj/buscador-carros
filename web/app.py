@@ -733,6 +733,7 @@ def clear_all():
     try:
         ca = session.query(CarListing).delete()
         ig = session.query(IgnoredListing).delete()
+        fv = session.query(FavoriteListing).delete()
         session.commit()
     finally:
         session.close()

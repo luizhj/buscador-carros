@@ -73,5 +73,10 @@
     "first": "Corolla",
     "second": "Fielder",
     "model": "Fielder"
+  },
+  {
+    "first": "S10",
+    "second": "Blazer",
+    "model": "Blazer"
   }
 ]
