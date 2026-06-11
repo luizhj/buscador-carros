@@ -909,6 +909,7 @@ def scrape_details(olx_id):
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
                 "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
                 "image_url": _first_img(),
+                "image_urls": json.loads(listing.image_urls) if listing.image_urls else [],
             }
 
         if not force and listing.description:
@@ -940,6 +941,11 @@ def scrape_details(olx_id):
                 avg_raw = priceref.get("price_p50")
                 if avg_raw is not None:
                     olx_avg_price = int(avg_raw) * 100
+                imgs = ad.get("images") or []
+                if imgs:
+                    urls = [img["original"] for img in imgs if img.get("original")]
+                    if urls:
+                        listing.image_urls = json.dumps(urls)
             except (json.JSONDecodeError, ValueError, TypeError):
                 pass
 

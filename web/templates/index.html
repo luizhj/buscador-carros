@@ -337,8 +337,14 @@
 #detailsModal .modal-dialog-scrollable .modal-content { max-height:82vh; height:82vh; }
 #detailsModal .modal-body { max-height:calc(82vh - 160px); overflow-y:auto; }
 #detailsModal .row.details-row { height:100%; }
-#detailsModal .details-img-col { height:100%; display:flex; align-items:flex-start; }
-#detailsModal .details-img-col img { width:100%; max-height:100%; object-fit:contain; border-radius:4px; }
+#detailsModal .details-img-col { height:100%; min-height:200px; display:flex; align-items:center; background:#f5f5f5; border-radius:4px; overflow:hidden; }
+#detailsModal #det-carousel { height:100%; }
+#detailsModal #det-carousel-inner .carousel-item { height:100%; transition:transform .15s ease; }
+#detailsModal #det-carousel-inner .carousel-item img { width:100%; height:100%; object-fit:contain; }
+#detailsModal .carousel-indicators button { width:10px; height:10px; border-radius:50%; }
+#detailsModal .carousel-control-prev, #detailsModal .carousel-control-next { opacity:0; transition:opacity .2s; }
+#detailsModal .details-img-col:hover .carousel-control-prev, #detailsModal .details-img-col:hover .carousel-control-next { opacity:1; }
+#detailsModal .carousel-control-prev-icon, #detailsModal .carousel-control-next-icon { background-color:rgba(0,0,0,.3); border-radius:50%; padding:15px; background-size:50%; }
 #detailsModal .tab-content { overflow-y:auto; flex:1; }
 #detailsModal .tab-pane.active { height:100%; }
 #detailsModal #tab-overview { overflow-x:hidden; }
@@ -370,7 +376,16 @@
             <div class="tab-pane fade show active h-100" id="tab-overview">
               <div class="row details-row h-100">
                 <div class="col-md-4 details-img-col">
-                  <img id="det-image" src="" class="img-fluid rounded">
+                  <div id="det-carousel" class="carousel slide h-100 w-100" data-bs-ride="false">
+                    <div class="carousel-inner h-100" id="det-carousel-inner"></div>
+                    <button class="carousel-control-prev" type="button" onclick="detCarouselSlide('prev')" style="width:10%;">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" onclick="detCarouselSlide('next')" style="width:10%;">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                    <div class="carousel-indicators" id="det-carousel-indicators" style="margin-bottom:0;"></div>
+                  </div>
                 </div>
                 <div class="col-md-8" style="overflow-y:auto;">
                   <h5 id="det-title" class="mb-2" style="font-size:1em;"></h5>
@@ -417,6 +432,19 @@
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
+  </div>
+</div>
+<div id="det-lightbox" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.9);flex-direction:column;align-items:center;justify-content:center;">
+  <button type="button" onclick="detCloseLightbox()" style="position:absolute;top:15px;right:25px;font-size:2em;color:#fff;background:none;border:none;cursor:pointer;z-index:10;">&times;</button>
+  <div id="det-lb-carousel" class="carousel slide w-100 h-100" style="max-width:90vw;max-height:90vh;">
+    <div class="carousel-inner h-100" id="det-lb-inner"></div>
+    <button class="carousel-control-prev" type="button" onclick="detLbSlide('prev')" style="width:8%;">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" onclick="detLbSlide('next')" style="width:8%;">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
+    <div class="carousel-indicators" id="det-lb-indicators"></div>
   </div>
 </div>
 <div class="modal fade" id="saveFilterModal" tabindex="-1">
@@ -518,6 +546,34 @@ document.getElementById('ignore-selected').onclick = async function() {
 };
 var currentDetailsOlxId = null;
 var currentDetailsDbId = null;
+var detCarousel = null;
+var detImages = [];
+var detLbCarousel = null;
+function detCarouselSlide(dir) { if (detCarousel) detCarousel[dir](); }
+function detOpenLightbox(i) {
+  var inner = document.getElementById('det-lb-inner');
+  var indicators = document.getElementById('det-lb-indicators');
+  inner.innerHTML = '';
+  indicators.innerHTML = '';
+  detImages.forEach(function(url, j) {
+    var ind = document.createElement('button');
+    ind.setAttribute('data-bs-target', '#det-lb-carousel');
+    ind.setAttribute('data-bs-slide-to', j);
+    if (j === i) ind.classList.add('active');
+    indicators.appendChild(ind);
+    var item = document.createElement('div');
+    item.className = 'carousel-item' + (j === i ? ' active' : '');
+    item.innerHTML = '<img src="/img-proxy?url=' + encodeURIComponent(url) + '" class="d-block w-100" style="height:90vh;object-fit:contain;">';
+    inner.appendChild(item);
+  });
+  if (detLbCarousel) detLbCarousel.dispose();
+  detLbCarousel = new bootstrap.Carousel(document.getElementById('det-lb-carousel'));
+  detLbCarousel.to(i);
+  document.getElementById('det-lightbox').style.display = 'flex';
+}
+function detLbSlide(dir) { if (detLbCarousel) detLbCarousel[dir](); }
+function detCloseLightbox() { document.getElementById('det-lightbox').style.display = 'none'; }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') detCloseLightbox(); });
 function _brl(v) {
   if (v == null) return '-';
   return 'R$ ' + (v / 100).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -576,9 +632,40 @@ function openDetails(olxId, dbId, force) {
       document.getElementById('det-seller-sep').textContent = '';
       document.getElementById('det-seller-type').textContent = '';
     }
-    document.getElementById('det-image').src = data.image_url ? '/img-proxy?url=' + encodeURIComponent(data.image_url) : '';
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
     document.getElementById('det-notes').value = data.notes || '';
+    detImages = data.image_urls && data.image_urls.length ? data.image_urls : (data.image_url ? [data.image_url] : []);
+    var images = detImages;
+    var carouselEl = document.getElementById('det-carousel');
+    var indicators = document.getElementById('det-carousel-indicators');
+    var inner = document.getElementById('det-carousel-inner');
+    indicators.innerHTML = '';
+    inner.innerHTML = '';
+    if (images.length > 1) {
+      images.forEach(function(url, i) {
+        var indicator = document.createElement('button');
+        indicator.setAttribute('data-bs-target', '#det-carousel');
+        indicator.setAttribute('data-bs-slide-to', i);
+        if (i === 0) indicator.classList.add('active');
+        indicators.appendChild(indicator);
+        var item = document.createElement('div');
+        item.className = 'carousel-item' + (i === 0 ? ' active' : '');
+        item.innerHTML = '<img src="/img-proxy?url=' + encodeURIComponent(url) + '" class="d-block w-100" loading="lazy" style="cursor:zoom-in;" onclick="detOpenLightbox(' + i + ')">';
+        inner.appendChild(item);
+      });
+      carouselEl.style.display = '';
+      if (detCarousel) detCarousel.dispose();
+      detCarousel = new bootstrap.Carousel(carouselEl);
+    } else if (images.length === 1) {
+      var item = document.createElement('div');
+      item.className = 'carousel-item active';
+      item.innerHTML = '<img src="/img-proxy?url=' + encodeURIComponent(images[0]) + '" class="d-block w-100" style="cursor:zoom-in;" onclick="detOpenLightbox(0)">';
+      inner.appendChild(item);
+      carouselEl.querySelectorAll('[data-bs-slide], .carousel-indicators').forEach(function(b) { b.style.display = 'none'; });
+    } else {
+      carouselEl.style.display = 'none';
+    }
+    document.getElementById('det-carousel').style.display = images.length ? '' : 'none';
     function _sel(id, val, opts) {
       var h = '<select class="form-select form-select-sm" id="' + id + '"><option value="">-</option>';
       opts.forEach(function(o) { h += '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; });
