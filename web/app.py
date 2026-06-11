@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import re
+import html
 from datetime import datetime, timezone
 import zipfile
 import io
@@ -9,6 +11,8 @@ import threading
 import shutil
 from flask import Flask, render_template, request, Response, redirect, url_for, send_file
 import urllib.request
+import cloudscraper
+from parsel import Selector
 
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _project_root not in sys.path:
@@ -854,6 +858,71 @@ def list_filters():
     try:
         filters = session.query(SavedFilter).order_by(SavedFilter.created_at.desc()).all()
         return {"filters": [{"id": f.id, "name": f.name, "params": f.params} for f in filters]}
+    finally:
+        session.close()
+
+
+@app.route("/scrape-details/<olx_id>")
+def scrape_details(olx_id):
+    force = request.args.get("force") == "1"
+    session = get_session()
+    try:
+        listing = session.query(CarListing).filter(CarListing.olx_id == olx_id).first()
+        if not listing or not listing.listing_url:
+            return {"error": "Anúncio não encontrado"}, 404
+
+        if not force and listing.description:
+            return {
+                "description": listing.description,
+                "olx_avg_price": listing.olx_avg_price,
+                "fipe_price": listing.fipe_price,
+                "listing_price": listing.price,
+                "cached": True,
+            }
+
+        _scraper = cloudscraper.create_scraper()
+        resp = _scraper.get(listing.listing_url, timeout=30)
+        if resp.status_code != 200:
+            return {"error": f"Erro ao acessar OLX: HTTP {resp.status_code}"}, 502
+
+        sel = Selector(text=resp.text)
+        description = None
+        olx_avg_price = None
+        fipe_price = None
+
+        raw_json = sel.css("script#initial-data::attr(data-json)").get()
+        if raw_json:
+            try:
+                data = json.loads(html.unescape(raw_json))
+                ad = data.get("ad") or {}
+                description = (ad.get("body") or ad.get("description") or "").strip() or None
+                fipe_raw = (ad.get("abuyFipePrice") or {}).get("fipePrice")
+                if fipe_raw is not None:
+                    fipe_price = int(fipe_raw) * 100
+                priceref = ad.get("abuyPriceRef") or {}
+                avg_raw = priceref.get("price_p50")
+                if avg_raw is not None:
+                    olx_avg_price = int(avg_raw) * 100
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+
+        if not description:
+            paragraphs = sel.css("meta[property='og:description']::attr(content)").get()
+            if paragraphs:
+                description = paragraphs.strip() or None
+
+        listing.description = description
+        listing.olx_avg_price = olx_avg_price
+        listing.fipe_price = fipe_price
+        session.commit()
+
+        return {
+            "description": description,
+            "olx_avg_price": olx_avg_price,
+            "fipe_price": fipe_price,
+            "listing_price": listing.price,
+            "cached": False,
+        }
     finally:
         session.close()
 

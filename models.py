@@ -42,6 +42,8 @@ class CarListing(Base):
     status = Column(String, default="active")
     edited = Column(Text, default=None)
     notes = Column(Text, default=None)
+    olx_avg_price = Column(Integer, default=None)
+    fipe_price = Column(Integer, default=None)
 
 
 class IgnoredListing(Base):
@@ -68,6 +70,17 @@ class SavedFilter(Base):
 
 def init_db():
     Base.metadata.create_all(engine)
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    cols = [c["name"] for c in inspector.get_columns("car_listings")]
+    if "olx_avg_price" not in cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE car_listings ADD COLUMN olx_avg_price INTEGER"))
+            conn.commit()
+    if "fipe_price" not in cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE car_listings ADD COLUMN fipe_price INTEGER"))
+            conn.commit()
 
 
 def get_session():

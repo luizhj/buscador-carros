@@ -293,7 +293,8 @@
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
               <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
               <td style="white-space:nowrap">
-                <button type="button" class="btn btn-outline-info btn-sm" onclick="openEdit(this)"
+                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openDetails('{{ ad.olx_id }}')">Detalhes</button>
+                 <button type="button" class="btn btn-outline-info btn-sm" onclick="openEdit(this)"
                   data-id="{{ ad.id }}"
                   data-brand="{{ ad.brand or '' }}"
                   data-model="{{ ad.model or '' }}"
@@ -407,6 +408,46 @@
       </div>
     </div>
   </form>
+</div>
+<div class="modal fade" id="detailsModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detalhes do Anúncio</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="detailsBody">
+        <div class="text-center py-4" id="detailsLoading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Buscando dados do anúncio...</p>
+        </div>
+        <div id="detailsContent" style="display:none">
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-sm text-center">
+              <thead class="table-light">
+                <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="det-listing-price" class="fw-bold"></td>
+                  <td id="det-olx-avg"></td>
+                  <td id="det-fipe"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h6 class="fw-bold">Descrição</h6>
+          <div id="det-description" class="p-3 bg-light rounded" style="white-space:pre-wrap;font-size:0.9em;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-warning btn-sm" id="det-force-btn" onclick="openDetails(currentDetailsOlxId, true)" title="Buscar novamente da OLX">
+          ↻ Forçar novo scrape
+        </button>
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="modal fade" id="saveFilterModal" tabindex="-1">
   <div class="modal-dialog modal-sm">
@@ -525,6 +566,33 @@ document.getElementById('editForm').onsubmit = async function(e) {
   sessionStorage.setItem('scrollY', window.scrollY);
   window.location.reload();
 };
+var currentDetailsOlxId = null;
+function _brl(v) {
+  if (v == null) return '-';
+  return 'R$ ' + (v / 100).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function openDetails(olxId, force) {
+  currentDetailsOlxId = olxId;
+  document.getElementById('detailsLoading').style.display = '';
+  document.getElementById('detailsContent').style.display = 'none';
+  document.getElementById('det-force-btn').disabled = true;
+  var modal = bootstrap.Modal.getOrCreateInstance('#detailsModal');
+  modal.show();
+  var url = '/scrape-details/' + olxId;
+  if (force) url += '?force=1';
+  fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+    document.getElementById('detailsLoading').style.display = 'none';
+    document.getElementById('detailsContent').style.display = '';
+    document.getElementById('det-force-btn').disabled = false;
+    document.getElementById('det-listing-price').textContent = _brl(data.listing_price);
+    document.getElementById('det-olx-avg').textContent = _brl(data.olx_avg_price);
+    document.getElementById('det-fipe').textContent = _brl(data.fipe_price);
+    document.getElementById('det-description').textContent = data.description || '(sem descrição)';
+  }).catch(function() {
+    document.getElementById('detailsLoading').innerHTML = '<p class="text-danger">Erro ao carregar dados.</p>';
+    document.getElementById('det-force-btn').disabled = false;
+  });
+}
 document.querySelectorAll('.price-input').forEach(function(el) {
   el.addEventListener('input', function() {
     var v = this.value.replace(/\D/g, '');
