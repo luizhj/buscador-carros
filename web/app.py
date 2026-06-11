@@ -465,11 +465,13 @@ def edit_listing(listing_id):
         if listing:
             edited = []
             for f in EDITABLE_FIELDS:
-                val = request.form.get(f, "").strip() or None
-                if val != getattr(listing, f):
-                    setattr(listing, f, val)
-                    edited.append(f)
-            listing.notes = request.form.get("notes", "").strip() or None
+                if f in request.form:
+                    val = request.form.get(f, "").strip() or None
+                    if val != getattr(listing, f):
+                        setattr(listing, f, val)
+                        edited.append(f)
+            if "notes" in request.form:
+                listing.notes = request.form.get("notes", "").strip() or None
             listing.edited = json.dumps(edited) if edited else listing.edited
             session.commit()
     finally:
@@ -903,6 +905,7 @@ def scrape_details(olx_id):
                 "seller_name": listing.seller_name,
                 "listing_date": listing.listing_date,
                 "zip_code": listing.zip_code,
+                "notes": listing.notes,
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
                 "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
                 "image_url": _first_img(),
