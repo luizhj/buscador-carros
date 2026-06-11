@@ -341,6 +341,8 @@ def todos_modelos():
         motorpower = request.args.get("motorpower", "")
         transmission = request.args.get("transmission", "")
         seller_type = request.args.get("seller_type", "")
+        price_min = _int_or_none(request.args.get("price_min"))
+        price_max = _int_or_none(request.args.get("price_max"))
         q = session.query(CarListing.brand, CarListing.model, func.count(CarListing.id)).filter(
             CarListing.brand.isnot(None), CarListing.model.isnot(None),
             CarListing.status == "active",
@@ -354,8 +356,16 @@ def todos_modelos():
             q = q.filter(CarListing.transmission == transmission)
         if seller_type:
             q = q.filter(CarListing.seller_type == seller_type)
+        if price_min:
+            q = q.filter(CarListing.price >= price_min * CENTAVOS_PER_REAL)
+        if price_max:
+            q = q.filter(CarListing.price <= price_max * CENTAVOS_PER_REAL)
         rows = q.group_by(CarListing.brand, CarListing.model).order_by(CarListing.brand, CarListing.model).all()
         _base = session.query(CarListing).filter(CarListing.status == "active", ~CarListing.olx_id.in_(_ignored))
+        if price_min:
+            _base = _base.filter(CarListing.price >= price_min * CENTAVOS_PER_REAL)
+        if price_max:
+            _base = _base.filter(CarListing.price <= price_max * CENTAVOS_PER_REAL)
         cartypes = [r[0] for r in _base.with_entities(CarListing.cartype).filter(CarListing.cartype.isnot(None)).distinct().order_by(CarListing.cartype).all() if r[0]]
         motorpowers = [r[0] for r in _base.with_entities(CarListing.motorpower).filter(CarListing.motorpower.isnot(None)).distinct().order_by(CarListing.motorpower).all() if r[0]]
         transmissions = [r[0] for r in _base.with_entities(CarListing.transmission).filter(CarListing.transmission.isnot(None)).distinct().order_by(CarListing.transmission).all() if r[0]]
@@ -365,11 +375,13 @@ def todos_modelos():
         if motorpower: extra["motorpower_filter"] = motorpower
         if transmission: extra["gearbox_filter"] = transmission
         if seller_type: extra["seller_type"] = seller_type
+        if price_min: extra["price_min"] = price_min
+        if price_max: extra["price_max"] = price_max
         return render_template("todos_modelos.html", modelos=rows, cartypes=cartypes, cartype=cartype,
                                motorpowers=motorpowers, motorpower=motorpower,
                                transmissions=transmissions, transmission=transmission,
                                seller_types=seller_types, seller_type=seller_type,
-                               model_extra=extra)
+                               price_min=price_min, price_max=price_max, model_extra=extra)
     finally:
         session.close()
 

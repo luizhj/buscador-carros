@@ -78,5 +78,10 @@
     "first": "S10",
     "second": "Blazer",
     "model": "Blazer"
+  },
+  {
+    "first": "Grand",
+    "second": "Livina",
+    "model": "Grand Livina"
   }
 ]
