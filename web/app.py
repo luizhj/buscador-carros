@@ -882,10 +882,14 @@ def scrape_details(olx_id):
 
         if not force and listing.description:
             return {
+                "title": listing.title,
                 "description": listing.description,
                 "olx_avg_price": listing.olx_avg_price,
                 "fipe_price": listing.fipe_price,
                 "listing_price": listing.price,
+                "city": listing.city,
+                "neighborhood": listing.neighborhood,
+                "seller_type": listing.seller_type,
                 "image_url": _first_img(),
                 "cached": True,
             }
@@ -930,10 +934,14 @@ def scrape_details(olx_id):
         session.commit()
 
         return {
+            "title": listing.title,
             "description": description,
             "olx_avg_price": olx_avg_price,
             "fipe_price": fipe_price,
             "listing_price": listing.price,
+            "city": listing.city,
+            "neighborhood": listing.neighborhood,
+            "seller_type": listing.seller_type,
             "image_url": _first_img(),
             "cached": False,
         }

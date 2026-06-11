@@ -435,16 +435,20 @@
               <img id="det-image" src="" class="img-fluid rounded">
             </div>
             <div class="col-md-8">
+              <h5 id="det-title" class="mb-2" style="font-size:1em;"></h5>
+              <p class="text-muted small mb-2"><span id="det-city"></span><span id="det-neighborhood-sep"></span><span id="det-neighborhood"></span><span id="det-seller-sep"></span><span id="det-seller-type"></span></p>
               <div class="table-responsive mb-3">
                 <table class="table table-bordered table-sm text-center">
                   <thead class="table-light">
-                    <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th></tr>
+                    <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th><th>Diferença FIPE</th><th>% FIPE</th></tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td id="det-listing-price" class="fw-bold"></td>
                       <td id="det-olx-avg"></td>
                       <td id="det-fipe"></td>
+                      <td id="det-diff-fipe"></td>
+                      <td id="det-pct-fipe"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -613,6 +617,36 @@ function openDetails(olxId, dbId, force) {
     document.getElementById('det-listing-price').textContent = _brl(data.listing_price);
     document.getElementById('det-olx-avg').textContent = _brl(data.olx_avg_price);
     document.getElementById('det-fipe').textContent = _brl(data.fipe_price);
+    var diff = data.fipe_price != null && data.listing_price != null ? data.listing_price - data.fipe_price : null;
+    var diffEl = document.getElementById('det-diff-fipe');
+    var pctEl = document.getElementById('det-pct-fipe');
+    if (diff != null) {
+      var sign = diff > 0 ? '+' : diff < 0 ? '−' : '';
+      diffEl.textContent = sign + _brl(Math.abs(diff));
+      diffEl.className = diff > 0 ? 'text-success fw-bold' : diff < 0 ? 'text-danger fw-bold' : '';
+      var pct = data.fipe_price ? (diff / data.fipe_price * 100) : 0;
+      pctEl.textContent = (diff > 0 ? '+' : diff < 0 ? '−' : '') + Math.abs(pct).toFixed(1) + '%';
+      pctEl.className = diff > 0 ? 'text-success fw-bold' : diff < 0 ? 'text-danger fw-bold' : '';
+    } else {
+      diffEl.textContent = '-';
+      diffEl.className = '';
+      pctEl.textContent = '-';
+      pctEl.className = '';
+    }
+    document.getElementById('det-title').textContent = data.title || '';
+    var loc = [];
+    if (data.city) loc.push(data.city);
+    if (data.neighborhood) loc.push(data.neighborhood);
+    document.getElementById('det-city').textContent = loc.join(' — ');
+    document.getElementById('det-neighborhood-sep').textContent = '';
+    document.getElementById('det-neighborhood').textContent = '';
+    if (data.seller_type) {
+      document.getElementById('det-seller-sep').textContent = loc.length ? ' | ' : '';
+      document.getElementById('det-seller-type').textContent = data.seller_type.charAt(0).toUpperCase() + data.seller_type.slice(1);
+    } else {
+      document.getElementById('det-seller-sep').textContent = '';
+      document.getElementById('det-seller-type').textContent = '';
+    }
     document.getElementById('det-image').src = data.image_url ? '/img-proxy?url=' + encodeURIComponent(data.image_url) : '';
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
   }).catch(function() {
