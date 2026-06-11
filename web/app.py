@@ -871,12 +871,22 @@ def scrape_details(olx_id):
         if not listing or not listing.listing_url:
             return {"error": "Anúncio não encontrado"}, 404
 
+        def _first_img():
+            if listing.image_urls:
+                try:
+                    urls = json.loads(listing.image_urls)
+                    return urls[0] if urls else None
+                except (json.JSONDecodeError, IndexError):
+                    return None
+            return None
+
         if not force and listing.description:
             return {
                 "description": listing.description,
                 "olx_avg_price": listing.olx_avg_price,
                 "fipe_price": listing.fipe_price,
                 "listing_price": listing.price,
+                "image_url": _first_img(),
                 "cached": True,
             }
 
@@ -924,6 +934,7 @@ def scrape_details(olx_id):
             "olx_avg_price": olx_avg_price,
             "fipe_price": fipe_price,
             "listing_price": listing.price,
+            "image_url": _first_img(),
             "cached": False,
         }
     finally:

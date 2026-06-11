@@ -409,8 +409,16 @@
     </div>
   </form>
 </div>
+<style>
+#detailsModal .modal-dialog { width:82vw; max-width:82vw; }
+#detailsModal .modal-dialog-scrollable .modal-content { max-height:82vh; height:82vh; }
+#detailsModal .modal-body { max-height:calc(82vh - 120px); overflow-y:auto; }
+#detailsModal .row.details-row { height:100%; }
+#detailsModal .details-img-col { height:100%; display:flex; align-items:flex-start; }
+#detailsModal .details-img-col img { width:100%; max-height:100%; object-fit:contain; border-radius:4px; }
+</style>
 <div class="modal fade" id="detailsModal" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Detalhes do Anúncio</h5>
@@ -421,23 +429,30 @@
           <div class="spinner-border text-primary" role="status"></div>
           <p class="mt-2 text-muted">Buscando dados do anúncio...</p>
         </div>
-        <div id="detailsContent" style="display:none">
-          <div class="table-responsive mb-3">
-            <table class="table table-bordered table-sm text-center">
-              <thead class="table-light">
-                <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td id="det-listing-price" class="fw-bold"></td>
-                  <td id="det-olx-avg"></td>
-                  <td id="det-fipe"></td>
-                </tr>
-              </tbody>
-            </table>
+        <div id="detailsContent" style="display:none;height:100%;">
+          <div class="row details-row">
+            <div class="col-md-4 details-img-col">
+              <img id="det-image" src="" class="img-fluid rounded">
+            </div>
+            <div class="col-md-8">
+              <div class="table-responsive mb-3">
+                <table class="table table-bordered table-sm text-center">
+                  <thead class="table-light">
+                    <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td id="det-listing-price" class="fw-bold"></td>
+                      <td id="det-olx-avg"></td>
+                      <td id="det-fipe"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <h6 class="fw-bold">Descrição</h6>
+              <div id="det-description" class="p-3 bg-light rounded" style="white-space:pre-wrap;font-size:0.9em;"></div>
+            </div>
           </div>
-          <h6 class="fw-bold">Descrição</h6>
-          <div id="det-description" class="p-3 bg-light rounded" style="white-space:pre-wrap;font-size:0.9em;"></div>
         </div>
       </div>
       <div class="modal-footer">
@@ -598,6 +613,7 @@ function openDetails(olxId, dbId, force) {
     document.getElementById('det-listing-price').textContent = _brl(data.listing_price);
     document.getElementById('det-olx-avg').textContent = _brl(data.olx_avg_price);
     document.getElementById('det-fipe').textContent = _brl(data.fipe_price);
+    document.getElementById('det-image').src = data.image_url ? '/img-proxy?url=' + encodeURIComponent(data.image_url) : '';
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
   }).catch(function() {
     document.getElementById('detailsLoading').innerHTML = '<p class="text-danger">Erro ao carregar dados.</p>';
