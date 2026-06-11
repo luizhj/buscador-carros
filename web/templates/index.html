@@ -412,10 +412,18 @@
 <style>
 #detailsModal .modal-dialog { width:82vw; max-width:82vw; }
 #detailsModal .modal-dialog-scrollable .modal-content { max-height:82vh; height:82vh; }
-#detailsModal .modal-body { max-height:calc(82vh - 120px); overflow-y:auto; }
+#detailsModal .modal-body { max-height:calc(82vh - 160px); overflow-y:auto; }
 #detailsModal .row.details-row { height:100%; }
 #detailsModal .details-img-col { height:100%; display:flex; align-items:flex-start; }
 #detailsModal .details-img-col img { width:100%; max-height:100%; object-fit:contain; border-radius:4px; }
+#detailsModal .tab-content { overflow-y:auto; flex:1; }
+#detailsModal .tab-pane.active { height:100%; }
+#detailsModal #tab-overview { overflow-x:hidden; }
+#detailsModal #tab-overview .table { font-size:0.75em; margin-bottom:0; }
+#detailsModal #tab-overview .table td, #detailsModal #tab-overview .table th { padding:4px 4px; }
+#detailsModal #tab-overview .col-md-8 { overflow-x:hidden; }
+#detailsModal #tab-data { overflow-x:hidden; }
+#detailsModal #tab-data .bg-light { border:1px solid #eee; }
 </style>
 <div class="modal fade" id="detailsModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-scrollable">
@@ -429,32 +437,43 @@
           <div class="spinner-border text-primary" role="status"></div>
           <p class="mt-2 text-muted">Buscando dados do anúncio...</p>
         </div>
-        <div id="detailsContent" style="display:none;height:100%;">
-          <div class="row details-row">
-            <div class="col-md-4 details-img-col">
-              <img id="det-image" src="" class="img-fluid rounded">
-            </div>
-            <div class="col-md-8">
-              <h5 id="det-title" class="mb-2" style="font-size:1em;"></h5>
-              <p class="text-muted small mb-2"><span id="det-city"></span><span id="det-neighborhood-sep"></span><span id="det-neighborhood"></span><span id="det-seller-sep"></span><span id="det-seller-type"></span></p>
-              <div class="table-responsive mb-3">
-                <table class="table table-bordered table-sm text-center">
-                  <thead class="table-light">
-                    <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th><th>Diferença FIPE</th><th>% FIPE</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td id="det-listing-price" class="fw-bold"></td>
-                      <td id="det-olx-avg"></td>
-                      <td id="det-fipe"></td>
-                      <td id="det-diff-fipe"></td>
-                      <td id="det-pct-fipe"></td>
-                    </tr>
-                  </tbody>
-                </table>
+        <div id="detailsContent" style="display:none;height:100%;flex-direction:column;">
+          <ul class="nav nav-tabs mb-3" id="detailsTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="tab-overview-btn" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">Visão Geral</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-data-btn" data-bs-toggle="tab" data-bs-target="#tab-data" type="button">Dados do Anúncio</button></li>
+          </ul>
+          <div class="tab-content flex-grow-1" style="min-height:0;">
+            <div class="tab-pane fade show active h-100" id="tab-overview">
+              <div class="row details-row h-100">
+                <div class="col-md-4 details-img-col">
+                  <img id="det-image" src="" class="img-fluid rounded">
+                </div>
+                <div class="col-md-8" style="overflow-y:auto;">
+                  <h5 id="det-title" class="mb-2" style="font-size:1em;"></h5>
+                  <p class="text-muted small mb-2"><span id="det-city"></span><span id="det-neighborhood-sep"></span><span id="det-neighborhood"></span><span id="det-seller-sep"></span><span id="det-seller-type"></span></p>
+                  <div class="mb-2">
+                    <table class="table table-bordered table-sm text-center" style="font-size:0.75em;">
+                      <thead class="table-light">
+                        <tr><th>Preço Anúncio</th><th>Preço Médio OLX</th><th>Preço FIPE</th><th>Diferença FIPE</th><th>% FIPE</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td id="det-listing-price" class="fw-bold"></td>
+                          <td id="det-olx-avg"></td>
+                          <td id="det-fipe"></td>
+                          <td id="det-diff-fipe"></td>
+                          <td id="det-pct-fipe"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <h6 class="fw-bold">Descrição</h6>
+                  <div id="det-description" class="p-3 bg-light rounded" style="white-space:pre-wrap;font-size:0.9em;"></div>
+                </div>
               </div>
-              <h6 class="fw-bold">Descrição</h6>
-              <div id="det-description" class="p-3 bg-light rounded" style="white-space:pre-wrap;font-size:0.9em;"></div>
+            </div>
+            <div class="tab-pane fade" id="tab-data">
+              <div id="det-data-table"></div>
             </div>
           </div>
         </div>
@@ -612,7 +631,7 @@ function openDetails(olxId, dbId, force) {
   if (force) url += '?force=1';
   fetch(url).then(function(r) { return r.json(); }).then(function(data) {
     document.getElementById('detailsLoading').style.display = 'none';
-    document.getElementById('detailsContent').style.display = '';
+    document.getElementById('detailsContent').style.display = 'flex';
     document.getElementById('det-force-btn').disabled = false;
     document.getElementById('det-listing-price').textContent = _brl(data.listing_price);
     document.getElementById('det-olx-avg').textContent = _brl(data.olx_avg_price);
@@ -649,6 +668,30 @@ function openDetails(olxId, dbId, force) {
     }
     document.getElementById('det-image').src = data.image_url ? '/img-proxy?url=' + encodeURIComponent(data.image_url) : '';
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
+    var dataRows = [
+      ['Marca', data.brand],
+      ['Modelo', data.model],
+      ['Ano', data.year],
+      ['KM', data.mileage != null ? data.mileage.toLocaleString('pt-BR') : '-'],
+      ['Combustível', data.fuel],
+      ['Câmbio', data.transmission],
+      ['Tipo', data.cartype],
+      ['Motor', data.motorpower],
+      ['Cor', data.color],
+      ['Vendedor', data.seller_name],
+      ['Tipo Vendedor', data.seller_type],
+      ['Data anúncio', data.listing_date ? data.listing_date.slice(0, 10) : '-'],
+      ['CEP', data.zip_code],
+      ['Criado em', data.created_at ? data.created_at.slice(0, 19).replace('T', ' ') : '-'],
+      ['Atualizado em', data.updated_at ? data.updated_at.slice(0, 19).replace('T', ' ') : '-'],
+    ];
+    var html = '<div class="row g-2">';
+    for (var i = 0; i < dataRows.length; i++) {
+      var val = dataRows[i][1] || '-';
+      html += '<div class="col-md-3"><div class="p-2 bg-light rounded" style="font-size:0.85em;"><span class="fw-bold text-muted">' + dataRows[i][0] + ':</span> <span>' + val + '</span></div></div>';
+    }
+    html += '</div>';
+    document.getElementById('det-data-table').innerHTML = html;
   }).catch(function() {
     document.getElementById('detailsLoading').innerHTML = '<p class="text-danger">Erro ao carregar dados.</p>';
     document.getElementById('det-force-btn').disabled = false;

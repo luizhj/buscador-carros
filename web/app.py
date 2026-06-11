@@ -880,19 +880,36 @@ def scrape_details(olx_id):
                     return None
             return None
 
-        if not force and listing.description:
+        def _listing_fields(desc, cached):
             return {
+                "cached": cached,
                 "title": listing.title,
-                "description": listing.description,
+                "description": desc,
                 "olx_avg_price": listing.olx_avg_price,
                 "fipe_price": listing.fipe_price,
                 "listing_price": listing.price,
                 "city": listing.city,
                 "neighborhood": listing.neighborhood,
                 "seller_type": listing.seller_type,
+                "brand": listing.brand,
+                "model": listing.model,
+                "year": listing.year,
+                "mileage": listing.mileage,
+                "fuel": listing.fuel,
+                "transmission": listing.transmission,
+                "cartype": listing.cartype,
+                "motorpower": listing.motorpower,
+                "color": listing.color,
+                "seller_name": listing.seller_name,
+                "listing_date": listing.listing_date,
+                "zip_code": listing.zip_code,
+                "created_at": listing.created_at.isoformat() if listing.created_at else None,
+                "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
                 "image_url": _first_img(),
-                "cached": True,
             }
+
+        if not force and listing.description:
+            return _listing_fields(listing.description, True)
 
         _scraper = cloudscraper.create_scraper()
         resp = _scraper.get(listing.listing_url, timeout=30)
@@ -933,18 +950,7 @@ def scrape_details(olx_id):
         listing.fipe_price = fipe_price
         session.commit()
 
-        return {
-            "title": listing.title,
-            "description": description,
-            "olx_avg_price": olx_avg_price,
-            "fipe_price": fipe_price,
-            "listing_price": listing.price,
-            "city": listing.city,
-            "neighborhood": listing.neighborhood,
-            "seller_type": listing.seller_type,
-            "image_url": _first_img(),
-            "cached": False,
-        }
+        return _listing_fields(description, False)
     finally:
         session.close()
 
