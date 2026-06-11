@@ -79,9 +79,26 @@ Em `config.py`:
 
 ### Listagem de anúncios
 
-Tabela com foto, título, preço, ano, KM, cidade e ações (ignorar/favoritar). Barra lateral com filtros por marca, modelo, cidade, bairro, tipo, motor, câmbio e ano.
+Tabela com foto, título, preço, ano, KM, cidade e ações (detalhes, ignorar/favoritar). Barra lateral com filtros por marca, modelo, cidade, bairro, tipo, motor, câmbio e ano.
 
 ![Listagem de anúncios](imagens/listagem_anuncios.png)
+
+### Detalhes do anúncio
+
+Botão **"Detalhes"** em cada anúncio abre um modal com três abas:
+
+- **Visão Geral** — carrossel de imagens (clique para ampliar), título, local, tipo de vendedor, tabela de preços (Anúncio × OLX × FIPE + diferença e % FIPE) e descrição completa.
+- **Dados do Anúncio** — campos editáveis (Marca, Modelo, Tipo, Motor, Câmbio) e informações adicionais (Ano, KM, Combustível, Cor, Vendedor, datas de criação/atualização). O botão "Salvar alterações" envia as edições para o banco.
+- **Observação** — campo de texto livre para anotações pessoais sobre o anúncio.
+
+O modal também oferece atalhos para **Favoritar** e **Ignorar** o anúncio, e o botão **"Forçar novo scrape"** busca dados atualizados (descrição e preços de referência) diretamente da página do anúncio na OLX.
+
+Os preços de referência (médio OLX e FIPE) são armazenados no banco na primeira vez que o modal é aberto e reutilizados nas próximas vezes.
+
+Ao clicar em uma imagem do carrossel, um **overlay fullscreen** é aberto com a imagem em tamanho original e navegação entre todas as fotos do anúncio.
+
+![Detalhes do anúncio](imagens/detalhes.png)
+![Zoom da imagem do anúncio](imagens/zoom_detalhes.png)
 
 ### Filtros
 

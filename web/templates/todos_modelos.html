@@ -82,6 +82,7 @@
       var v = this.value.replace(/\D/g, '');
       this.value = v ? 'R$ ' + parseInt(v, 10).toLocaleString('pt-BR') : '';
     });
+    el.addEventListener('change', filtro);
     el.dispatchEvent(new Event('input'));
   });
   function _rawPrice(id) {
