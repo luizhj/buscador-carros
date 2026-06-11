@@ -71,17 +71,31 @@
       <option value="{{ st }}" {% if st == seller_type %}selected{% endif %}>{{ st | capitalize }}</option>
       {% endfor %}
     </select>
-    <input type="number" class="form-control" style="width:140px;display:inline-block;" placeholder="Preço mín. R$" id="filtro-preco-min" value="{{ price_min or '' }}" onchange="filtro()">
-    <input type="number" class="form-control" style="width:140px;display:inline-block;" placeholder="Preço máx. R$" id="filtro-preco-max" value="{{ price_max or '' }}" onchange="filtro()">
+    <input type="text" class="form-control price-mask" style="width:160px;display:inline-block;" placeholder="Preço mín." id="filtro-preco-min" value="{{ price_min or '' }}">
+    <input type="text" class="form-control price-mask" style="width:160px;display:inline-block;" placeholder="Preço máx." id="filtro-preco-max" value="{{ price_max or '' }}">
+    <input type="number" class="form-control" style="width:110px;display:inline-block;" placeholder="Ano mín." id="filtro-ano-min" value="{{ year_min or '' }}" onchange="filtro()">
+    <input type="number" class="form-control" style="width:110px;display:inline-block;" placeholder="Ano máx." id="filtro-ano-max" value="{{ year_max or '' }}" onchange="filtro()">
   </div>
   <script>
+  document.querySelectorAll('.price-mask').forEach(function(el) {
+    el.addEventListener('input', function() {
+      var v = this.value.replace(/\D/g, '');
+      this.value = v ? 'R$ ' + parseInt(v, 10).toLocaleString('pt-BR') : '';
+    });
+    el.dispatchEvent(new Event('input'));
+  });
+  function _rawPrice(id) {
+    return (document.getElementById(id).value || '').replace(/\D/g, '');
+  }
   function filtro() {
     const t = document.getElementById('filtro-tipo').value;
     const m = document.getElementById('filtro-motor').value;
     const c = document.getElementById('filtro-cambio').value;
     const v = document.getElementById('filtro-vendedor').value;
-    const pmin = document.getElementById('filtro-preco-min').value;
-    const pmax = document.getElementById('filtro-preco-max').value;
+    const pmin = _rawPrice('filtro-preco-min');
+    const pmax = _rawPrice('filtro-preco-max');
+    const ymin = document.getElementById('filtro-ano-min').value;
+    const ymax = document.getElementById('filtro-ano-max').value;
     const params = new URLSearchParams();
     if (t) params.set('cartype', t);
     if (m) params.set('motorpower', m);
@@ -89,6 +103,8 @@
     if (v) params.set('seller_type', v);
     if (pmin) params.set('price_min', pmin);
     if (pmax) params.set('price_max', pmax);
+    if (ymin) params.set('year_min', ymin);
+    if (ymax) params.set('year_max', ymax);
     const qs = params.toString();
     window.location.href = '/modelos' + (qs ? '?' + qs : '');
   }

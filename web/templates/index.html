@@ -206,10 +206,10 @@
             <input name="q" class="form-control" placeholder="Buscar..." value="{{ request.args.get('q', '') }}">
           </div>
           <div class="col-md-2">
-            <input name="price_min" class="form-control" placeholder="Preço min" value="{{ request.args.get('price_min', '') }}">
+            <input name="price_min" class="form-control price-input" placeholder="Preço min" value="{{ request.args.get('price_min', '') }}">
           </div>
           <div class="col-md-2">
-            <input name="price_max" class="form-control" placeholder="Preço máx" value="{{ request.args.get('price_max', '') }}">
+            <input name="price_max" class="form-control price-input" placeholder="Preço máx" value="{{ request.args.get('price_max', '') }}">
           </div>
           <div class="col-md-1">
             <input name="year_min" class="form-control" placeholder="Ano min" value="{{ request.args.get('year_min', '') }}">
@@ -515,6 +515,18 @@ document.getElementById('editForm').onsubmit = async function(e) {
   bootstrap.Modal.getInstance('#editModal').hide();
   window.location.reload();
 };
+document.querySelectorAll('.price-input').forEach(function(el) {
+  el.addEventListener('input', function() {
+    var v = this.value.replace(/\D/g, '');
+    this.value = v ? 'R$ ' + parseInt(v, 10).toLocaleString('pt-BR') : '';
+  });
+  el.dispatchEvent(new Event('input'));
+});
+document.querySelector('form[method="GET"]').addEventListener('submit', function() {
+  this.querySelectorAll('.price-input').forEach(function(el) {
+    el.value = (el.value || '').replace(/\D/g, '');
+  });
+});
 </script>
 </body>
 </html>
