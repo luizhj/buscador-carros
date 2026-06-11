@@ -895,7 +895,10 @@ def scrape_details(olx_id):
             try:
                 data = json.loads(html.unescape(raw_json))
                 ad = data.get("ad") or {}
-                description = (ad.get("body") or ad.get("description") or "").strip() or None
+                raw = ad.get("body") or ad.get("description") or ""
+                raw = re.sub(r"<br\s*/?>", "\n", raw, flags=re.IGNORECASE)
+                raw = re.sub(r"<[^>]+>", "", raw)
+                description = raw.strip() or None
                 fipe_raw = (ad.get("abuyFipePrice") or {}).get("fipePrice")
                 if fipe_raw is not None:
                     fipe_price = int(fipe_raw) * 100

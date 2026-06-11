@@ -293,7 +293,7 @@
               <td>{{ ad.city }}{{ ' - ' if ad.city and ad.state else '' }}{{ ad.state }}</td>
               <td><a href="{{ ad.listing_url }}" target="_blank">Abrir</a></td>
               <td style="white-space:nowrap">
-                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openDetails('{{ ad.olx_id }}')">Detalhes</button>
+                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openDetails('{{ ad.olx_id }}', {{ ad.id }})">Detalhes</button>
                  <button type="button" class="btn btn-outline-info btn-sm" onclick="openEdit(this)"
                   data-id="{{ ad.id }}"
                   data-brand="{{ ad.brand or '' }}"
@@ -441,9 +441,11 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline-warning btn-sm" id="det-force-btn" onclick="openDetails(currentDetailsOlxId, true)" title="Buscar novamente da OLX">
+        <button class="btn btn-outline-warning btn-sm" id="det-force-btn" onclick="openDetails(currentDetailsOlxId, currentDetailsDbId, true)" title="Buscar novamente da OLX">
           ↻ Forçar novo scrape
         </button>
+        <button class="btn btn-outline-danger btn-sm" onclick="detailsIgnore()">✕ Ignorar</button>
+        <button class="btn btn-outline-danger btn-sm" id="det-fav-btn" onclick="detailsFav()">♥ Favoritar</button>
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
@@ -567,15 +569,24 @@ document.getElementById('editForm').onsubmit = async function(e) {
   window.location.reload();
 };
 var currentDetailsOlxId = null;
+var currentDetailsDbId = null;
 function _brl(v) {
   if (v == null) return '-';
   return 'R$ ' + (v / 100).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
-function openDetails(olxId, force) {
+function openDetails(olxId, dbId, force) {
   currentDetailsOlxId = olxId;
+  currentDetailsDbId = dbId;
   document.getElementById('detailsLoading').style.display = '';
   document.getElementById('detailsContent').style.display = 'none';
   document.getElementById('det-force-btn').disabled = true;
+  var favBtn = document.getElementById('det-fav-btn');
+  var favIcon = document.getElementById('fav-' + dbId);
+  if (favIcon) {
+    favBtn.textContent = favIcon.style.color === 'red' ? '♥ Favoritado' : '♡ Favoritar';
+  } else {
+    favBtn.textContent = '♡ Favoritar';
+  }
   var modal = bootstrap.Modal.getOrCreateInstance('#detailsModal');
   modal.show();
   var url = '/scrape-details/' + olxId;
@@ -592,6 +603,20 @@ function openDetails(olxId, force) {
     document.getElementById('detailsLoading').innerHTML = '<p class="text-danger">Erro ao carregar dados.</p>';
     document.getElementById('det-force-btn').disabled = false;
   });
+}
+function detailsFav() {
+  var id = currentDetailsDbId;
+  var favIcon = document.getElementById('fav-' + id);
+  var isFav = favIcon && favIcon.style.color === 'red';
+  fetch('/' + (isFav ? 'unfavorite' : 'favorite') + '/' + id, { method: 'POST' }).then(function() {
+    if (favIcon) { favIcon.style.color = isFav ? '#ccc' : 'red'; }
+    var btn = document.getElementById('det-fav-btn');
+    btn.textContent = isFav ? '♡ Favoritar' : '♥ Favoritado';
+  });
+}
+function detailsIgnore() {
+  if (!confirm('Ignorar este anúncio? Ele não aparecerá mais nas listas.')) return;
+  window.location.href = '/ignore/' + currentDetailsDbId;
 }
 document.querySelectorAll('.price-input').forEach(function(el) {
   el.addEventListener('input', function() {
