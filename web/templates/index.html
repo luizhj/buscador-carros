@@ -220,6 +220,13 @@
           <div class="col-md-1">
             <input name="km_max" class="form-control" placeholder="KM máx" value="{{ request.args.get('km_max', '') }}">
           </div>
+          <div class="col-md-2">
+            <select name="notes_filter" class="form-select">
+              <option value="">Obs.</option>
+              <option value="with" {% if request.args.get('notes_filter') == 'with' %}selected{% endif %}>Com obs.</option>
+              <option value="without" {% if request.args.get('notes_filter') == 'without' %}selected{% endif %}>Sem obs.</option>
+            </select>
+          </div>
         </div>
         <div class="row mt-2">
           <div class="col-md-2">
@@ -241,7 +248,7 @@
           <div class="col-md-2">
             <button type="button" id="ignore-selected" class="btn btn-outline-danger w-100">Ignorar selecionados</button>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-1">
             <a href="{% if request.args.get('novos') %}/{% else %}?novos=1{% endif %}" class="btn btn-outline-success w-100">{% if request.args.get('novos') %}Todos{% else %}Apenas novos{% endif %}</a>
           </div>
         </div>
@@ -443,6 +450,7 @@ function onFilterSelect() {
 function loadFilter() {
   const id = document.getElementById('saved-filters').value;
   if (!id) return;
+  sessionStorage.setItem('scrollY', window.scrollY);
   fetch('/filters').then(r => r.json()).then(data => {
     const f = data.filters.find(f => f.id == id);
     if (f) window.location.href = '/?' + f.params;
@@ -494,6 +502,7 @@ document.getElementById('ignore-selected').onclick = async function() {
   const fd = new FormData();
   ids.forEach(id => fd.append('listing_id', id));
   await fetch('/ignore-batch', { method: 'POST', body: fd });
+  sessionStorage.setItem('scrollY', window.scrollY);
   window.location.reload();
 };
 function openEdit(btn) {
@@ -513,6 +522,7 @@ document.getElementById('editForm').onsubmit = async function(e) {
   const fd = new FormData(this);
   await fetch('/edit/' + id, { method: 'POST', body: fd });
   bootstrap.Modal.getInstance('#editModal').hide();
+  sessionStorage.setItem('scrollY', window.scrollY);
   window.location.reload();
 };
 document.querySelectorAll('.price-input').forEach(function(el) {
@@ -526,6 +536,21 @@ document.querySelector('form[method="GET"]').addEventListener('submit', function
   this.querySelectorAll('.price-input').forEach(function(el) {
     el.value = (el.value || '').replace(/\D/g, '');
   });
+});
+window.addEventListener('beforeunload', function() {
+  sessionStorage.setItem('scrollY', window.scrollY);
+});
+window.addEventListener('load', function() {
+  var sy = sessionStorage.getItem('scrollY');
+  if (sy) {
+    sessionStorage.removeItem('scrollY');
+    sy = parseInt(sy, 10);
+    var tries = 0;
+    var iv = setInterval(function() {
+      window.scrollTo(0, sy);
+      if (++tries > 30 || Math.abs(window.scrollY - sy) < 50) clearInterval(iv);
+    }, 100);
+  }
 });
 </script>
 </body>

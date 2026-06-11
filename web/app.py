@@ -91,6 +91,11 @@ def index():
             q_base = q_base.filter(CarListing.price >= p_min * CENTAVOS_PER_REAL)
         if p_max := _int_or_none(request.args.get("price_max")):
             q_base = q_base.filter(CarListing.price <= p_max * CENTAVOS_PER_REAL)
+        notes_filter = request.args.get("notes_filter", "")
+        if notes_filter == "with":
+            q_base = q_base.filter(CarListing.notes.isnot(None))
+        elif notes_filter == "without":
+            q_base = q_base.filter(CarListing.notes.is_(None))
 
         _ignored_sub = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         _ignored_filter = ~CarListing.olx_id.in_(_ignored_sub)
