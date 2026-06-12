@@ -60,6 +60,24 @@ class FavoriteListing(Base):
     favorited_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class Brand(Base):
+    __tablename__ = "brands"
+    olx_id = Column(Integer, primary_key=True)
+    name = Column(String)
+    slug = Column(String, default=None)
+
+
+class BlacklistRule(Base):
+    __tablename__ = "blacklist_rules"
+
+    id = Column(Integer, primary_key=True)
+    brand = Column(String, default=None)
+    model = Column(String, default=None)
+    motorpower = Column(String, default=None)
+    transmission = Column(String, default=None)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class SavedFilter(Base):
     __tablename__ = "saved_filters"
     id = Column(Integer, primary_key=True)

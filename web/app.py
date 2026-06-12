@@ -19,7 +19,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from sqlalchemy import func
-from models import CarListing, IgnoredListing, FavoriteListing, SavedFilter, get_session, init_db
+from models import CarListing, IgnoredListing, FavoriteListing, SavedFilter, BlacklistRule, Brand, get_session, init_db
 
 CENTAVOS_PER_REAL = 100
 _UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -636,6 +636,76 @@ def save_compounds():
         json.dump(data, f, indent=2)
         f.write("\n")
     return ("", 200)
+
+
+@app.route("/blacklist")
+def blacklist_page():
+    session = get_session()
+    try:
+        rules = session.query(BlacklistRule).order_by(BlacklistRule.created_at.desc()).all()
+        motorpowers = [r[0] for r in session.query(CarListing.motorpower).filter(CarListing.motorpower.isnot(None)).distinct().order_by(CarListing.motorpower).all() if r[0]]
+        transmissions = [r[0] for r in session.query(CarListing.transmission).filter(CarListing.transmission.isnot(None)).distinct().order_by(CarListing.transmission).all() if r[0]]
+        brands = [r.name for r in session.query(Brand).order_by(Brand.name).all()]
+        return render_template("blacklist.html", rules=rules, motorpowers=motorpowers, transmissions=transmissions, brands=brands)
+    finally:
+        session.close()
+
+
+@app.route("/blacklist/add", methods=["POST"])
+def blacklist_add():
+    brand = request.form.get("brand", "").strip() or None
+    model = request.form.get("model", "").strip() or None
+    motorpower = request.form.get("motorpower", "").strip() or None
+    transmission = request.form.get("transmission", "").strip() or None
+    if not any([brand, model, motorpower, transmission]):
+        return redirect(url_for("blacklist_page"))
+    session = get_session()
+    try:
+        session.add(BlacklistRule(brand=brand, model=model, motorpower=motorpower, transmission=transmission))
+        session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("blacklist_page"))
+
+
+@app.route("/blacklist/delete/<int:rule_id>", methods=["POST"])
+def blacklist_delete(rule_id):
+    session = get_session()
+    try:
+        rule = session.get(BlacklistRule, rule_id)
+        if rule:
+            session.delete(rule)
+            session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("blacklist_page"))
+
+
+@app.route("/blacklist/apply", methods=["POST"])
+def blacklist_apply():
+    session = get_session()
+    try:
+        rules = session.query(BlacklistRule).all()
+        added = 0
+        for rule in rules:
+            q = session.query(CarListing).filter(CarListing.status == "active", CarListing.olx_id.isnot(None))
+            if rule.brand:
+                q = q.filter(CarListing.brand == rule.brand)
+            if rule.model:
+                q = q.filter(CarListing.model == rule.model)
+            if rule.motorpower:
+                q = q.filter(CarListing.motorpower == rule.motorpower)
+            if rule.transmission:
+                q = q.filter(CarListing.transmission == rule.transmission)
+            for listing in q.all():
+                if listing.olx_id and not session.get(IgnoredListing, listing.olx_id):
+                    session.add(IgnoredListing(olx_id=listing.olx_id, title=listing.title))
+                    added += 1
+        if added:
+            session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("blacklist_page"))
 
 
 DB_PATH = os.path.join(_project_root, "car_listings.db")

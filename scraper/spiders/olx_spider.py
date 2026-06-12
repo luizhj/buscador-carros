@@ -14,7 +14,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from config import START_URL, START_PAGE, MAX_PAGES
-from models import CarListing, IgnoredListing, get_session, init_db
+from models import CarListing, IgnoredListing, BlacklistRule, Brand, get_session, init_db
 
 
 def _cidades_permitidas():
@@ -110,6 +110,12 @@ class OlxSpider(scrapy.Spider):
         self.max_pages = kwargs.get("max_pages") or MAX_PAGES
         custom_url = kwargs.get("start_url") or START_URL
         self._start_url = custom_url if START_PAGE <= 1 else custom_url + "&o=" + str(START_PAGE)
+        self._blacklist = []
+        session = get_session()
+        try:
+            self._blacklist = session.query(BlacklistRule).all()
+        finally:
+            session.close()
 
     def start_requests(self):
         url = self._start_url
@@ -146,7 +152,8 @@ class OlxSpider(scrapy.Spider):
             total = props.get("totalOfAds", 0)
             if total:
                 print(f"Total de anúncios: {total}")
-                self._total_printed = True
+            self._save_brands(props)
+            self._total_printed = True
 
         for ad in ads:
             title = (ad.get("subject") or "")
@@ -154,6 +161,8 @@ class OlxSpider(scrapy.Spider):
             if "*" in title or "retirada de peça" in lower or "entrada" in lower or "parcelas" in lower or "sucata" in lower:
                 continue
             item = self._item_from_listing_data(ad)
+            if self._is_blacklisted(item):
+                continue
             allowed = _cidades_permitidas()
             if allowed and item.get("city") and item["city"] not in allowed:
                 continue
@@ -254,6 +263,46 @@ class OlxSpider(scrapy.Spider):
             listing_url=ad.get("url", ""),
             listing_date=listing_date,
         )
+
+    def _is_blacklisted(self, item):
+        for rule in self._blacklist:
+            if rule.brand and item.get("brand") != rule.brand:
+                continue
+            if rule.model and item.get("model") != rule.model:
+                continue
+            if rule.motorpower and item.get("motorpower") != rule.motorpower:
+                continue
+            if rule.transmission and item.get("transmission") != rule.transmission:
+                continue
+            return True
+        return False
+
+    def _save_brands(self, props):
+        ft = props.get("filtersTemplate", {})
+        for tmpl in ft.get("template", []):
+            if tmpl.get("id") == "brands":
+                session = get_session()
+                try:
+                    server_values = []
+                    for comp in tmpl.get("props", {}).get("components", []):
+                        ds = comp.get("props", {}).get("datasource", {})
+                        server_values.extend(ds.get("serverValues", []))
+                    count = 0
+                    for sv in server_values:
+                        oid = sv.get("value")
+                        if oid and oid.isdigit():
+                            existing = session.get(Brand, int(oid))
+                            if not existing:
+                                session.add(Brand(
+                                    olx_id=int(oid),
+                                    name=sv.get("label", ""),
+                                    slug=sv.get("extraData", {}).get("friendlyPath"),
+                                ))
+                                count += 1
+                    session.commit()
+                    print(f"  Marcas salvas: {len(server_values)} marcas ({count} novas)")
+                finally:
+                    session.close()
 
     def _parse_price(self, raw):
         m = re.search(r"[\d.]+", raw.replace(" ", ""))
