@@ -16,7 +16,10 @@
       <form method="POST" action="/run-scrape">
         <div class="mb-3">
           <label class="form-label fw-bold">URL de pesquisa (OLX)</label>
-          <input type="url" name="url" class="form-control" value="{{ current_url }}" required>
+          <div class="input-group">
+            <input type="url" name="url" class="form-control" value="{{ current_url }}" required id="search-url">
+            <a href="{{ current_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary">Abrir</a>
+          </div>
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">Cidades permitidas</label>

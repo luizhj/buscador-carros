@@ -427,6 +427,7 @@
         <button class="btn btn-outline-warning btn-sm" id="det-force-btn" onclick="openDetails(currentDetailsOlxId, currentDetailsDbId, true)" title="Buscar novamente da OLX">
           ↻ Forçar novo scrape
         </button>
+        <a class="btn btn-outline-primary btn-sm" id="det-open-url" href="#" target="_blank" rel="noopener">↗ Abrir anúncio</a>
         <button class="btn btn-outline-danger btn-sm" onclick="detailsIgnore()">✕ Ignorar</button>
         <button class="btn btn-outline-danger btn-sm" id="det-fav-btn" onclick="detailsFav()">♥ Favoritar</button>
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
@@ -619,6 +620,8 @@ function openDetails(olxId, dbId, force) {
       pctEl.className = '';
     }
     document.getElementById('det-title').textContent = data.title || '';
+    var kmEl = document.getElementById('det-title');
+    if (data.mileage != null) kmEl.textContent += ' — ' + data.mileage.toLocaleString('pt-BR') + ' km';
     var loc = [];
     if (data.city) loc.push(data.city);
     if (data.neighborhood) loc.push(data.neighborhood);
@@ -634,6 +637,7 @@ function openDetails(olxId, dbId, force) {
     }
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
     document.getElementById('det-notes').value = data.notes || '';
+    document.getElementById('det-open-url').href = data.listing_url || '#';
     detImages = data.image_urls && data.image_urls.length ? data.image_urls : (data.image_url ? [data.image_url] : []);
     var images = detImages;
     var carouselEl = document.getElementById('det-carousel');

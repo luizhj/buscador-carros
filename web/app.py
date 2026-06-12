@@ -559,6 +559,31 @@ def restore_active_batch():
     return ("", 200)
 
 
+@app.route("/delete-listing/<int:listing_id>")
+def delete_listing(listing_id):
+    session = get_session()
+    try:
+        listing = session.get(CarListing, listing_id)
+        if listing:
+            session.delete(listing)
+            session.commit()
+    finally:
+        session.close()
+    return redirect(request.referrer or "/excluidos")
+
+
+@app.route("/delete-listing-batch", methods=["POST"])
+def delete_listing_batch():
+    ids = [int(v) for v in request.form.getlist("listing_id") if v.isdigit()]
+    session = get_session()
+    try:
+        session.query(CarListing).filter(CarListing.id.in_(ids)).delete(synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
+    return ("", 200)
+
+
 @app.route("/ignorados")
 def ignored_listings():
     session = get_session()
@@ -905,6 +930,7 @@ def scrape_details(olx_id):
                 "seller_name": listing.seller_name,
                 "listing_date": listing.listing_date,
                 "zip_code": listing.zip_code,
+                "listing_url": listing.listing_url,
                 "notes": listing.notes,
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
                 "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
