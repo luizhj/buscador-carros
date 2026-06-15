@@ -24,16 +24,16 @@
   margin-bottom: 6px;
 }
 .models-grid .model-item {
-  display: block;
-  padding: 2px 4px;
+  display: flex;
+  align-items: center;
   font-size: 0.85em;
-  text-decoration: none;
-  color: inherit;
   border-radius: 3px;
+  padding: 2px 4px;
 }
 .models-grid .model-item:hover {
   background: #e9ecef;
 }
+.models-grid .model-item a { padding:1px 0; }
 @media (max-width: 992px) { .models-grid { column-count: 3; } }
 @media (max-width: 768px) { .models-grid { column-count: 2; } }
 @media (max-width: 576px) { .models-grid { column-count: 1; } }
@@ -138,10 +138,17 @@
         <div class="brand-name">{{ brand }}</div>
         {% set ns.current_brand = brand %}
       {% endif %}
-      <a href="/?model={{ model }}{% for k,v in model_extra.items() %}&{{ k }}={{ v }}{% endfor %}" class="model-item d-flex justify-content-between align-items-center">
-        <span>{{ model }}</span>
-        <span class="badge bg-secondary rounded-pill" style="font-size:0.75em;">{{ count }}</span>
-      </a>
+      <div class="model-item d-flex justify-content-between align-items-center">
+        <a href="/?model={{ model }}{% for k,v in model_extra.items() %}&{{ k }}={{ v }}{% endfor %}" class="text-decoration-none text-dark flex-grow-1" style="padding:2px 4px;">
+          <span>{{ model }}</span>
+        </a>
+        <span class="badge bg-secondary rounded-pill" style="font-size:0.75em;margin-right:4px;">{{ count }}</span>
+        <form method="POST" action="/blacklist/add" style="display:inline;margin:0;padding:0;">
+          <input type="hidden" name="brand" value="{{ brand }}">
+          <input type="hidden" name="model" value="{{ model }}">
+          <button type="submit" class="btn btn-sm p-0 border-0 text-muted" title="Adicionar à blacklist" onclick="return confirm('Ignorar {{ brand }} {{ model }} no próximo scrape?')" style="font-size:0.75em;line-height:1;">⊗</button>
+        </form>
+      </div>
     {% endfor %}
     </div>
   </div>

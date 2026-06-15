@@ -14,6 +14,9 @@
   <a href="/" class="btn btn-outline-secondary mb-2">&larr; Voltar para listagem</a>
   <button type="button" id="restore-selected" class="btn btn-success mb-2">Restaurar selecionados</button>
   <button type="button" id="delete-selected" class="btn btn-outline-danger mb-2">Excluir selecionados</button>
+  <form method="POST" action="/clear-deleted" style="display:inline" onsubmit="return confirm('Limpar TODOS os anúncios excluídos? Esta ação não pode ser desfeita.');">
+    <button type="submit" class="btn btn-outline-danger mb-2">Limpar todos excluídos</button>
+  </form>
 
   <div class="table-responsive">
     <table class="table table-striped table-hover bg-white rounded shadow-sm">

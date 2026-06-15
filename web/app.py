@@ -331,7 +331,7 @@ def marcas():
         _ignored = session.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
         rows = (
             session.query(CarListing.brand, func.count(CarListing.id))
-            .filter(CarListing.brand.isnot(None), ~CarListing.olx_id.in_(_ignored))
+            .filter(CarListing.brand.isnot(None), CarListing.status == "active", ~CarListing.olx_id.in_(_ignored))
             .group_by(CarListing.brand)
             .order_by(CarListing.brand)
             .all()
@@ -584,6 +584,17 @@ def delete_listing_batch():
     return ("", 200)
 
 
+@app.route("/clear-deleted", methods=["POST"])
+def clear_deleted():
+    session = get_session()
+    try:
+        session.query(CarListing).filter(CarListing.status == "deleted").delete(synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("excluded_listings"))
+
+
 @app.route("/ignorados")
 def ignored_listings():
     session = get_session()
@@ -665,7 +676,7 @@ def blacklist_add():
         session.commit()
     finally:
         session.close()
-    return redirect(url_for("blacklist_page"))
+    return redirect(request.referrer or url_for("blacklist_page"))
 
 
 @app.route("/blacklist/delete/<int:rule_id>", methods=["POST"])

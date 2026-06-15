@@ -14,14 +14,20 @@
   <div class="row g-3">
     {% for brand, count in marcas %}
     <div class="col-md-4 col-lg-3">
-      <a href="/marcas/{{ brand }}" class="text-decoration-none">
-        <div class="card shadow-sm h-100">
-          <div class="card-body text-center">
+      <div class="card shadow-sm h-100">
+        <a href="/marcas/{{ brand }}" class="text-decoration-none">
+          <div class="card-body text-center pb-1">
             <h5 class="card-title">{{ brand }}</h5>
             <span class="badge bg-primary">{{ count }} anúncio{{ 's' if count != 1 }}</span>
           </div>
+        </a>
+        <div class="card-footer bg-transparent text-center border-0 pt-0 pb-2">
+          <form method="POST" action="/blacklist/add" style="display:inline">
+            <input type="hidden" name="brand" value="{{ brand }}">
+            <button type="submit" class="btn btn-outline-dark btn-sm" onclick="return confirm('Adicionar {{ brand }} na blacklist? Todos os anúncios desta marca serão ignorados no próximo scrape.')">Blacklist</button>
+          </form>
         </div>
-      </a>
+      </div>
     </div>
     {% endfor %}
   </div>
