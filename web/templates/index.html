@@ -322,7 +322,7 @@
                 {%- if ad.car_steering or ad.car_features %}
                 <br><span class="text-muted" style="font-size:0.75em;">
                   {%- set _info = [] -%}
-                  {%- if ad.car_steering %}{% set _info = _info + ['Direção: ' + ad.car_steering] %}{% endif -%}
+                  {%- if ad.car_steering and ad.car_steering.lower() != 'mecânica' %}{% set _info = _info + ['Direção: ' + ad.car_steering] %}{% endif -%}
                   {%- if ad.car_features and 'Ar condicionado' in ad.car_features|fromjson %}{% set _info = _info + ['Ar condicionado'] %}{% endif -%}
                   {{ _info | join(' | ') -}}
                 </span>

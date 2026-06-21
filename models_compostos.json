@@ -83,5 +83,15 @@
     "first": "Grand",
     "second": "Livina",
     "model": "Grand Livina"
+  },
+  {
+    "first": "Del",
+    "second": "Rey",
+    "model": "Del Rey"
+  },
+  {
+    "first": "Xsara",
+    "second": "Break",
+    "model": "Xsara Break"
   }
 ]

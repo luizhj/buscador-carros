@@ -57,25 +57,32 @@
   <div class="card shadow-sm">
     <div class="card-header fw-bold d-flex justify-content-between align-items-center">
       <span>Regras ({{ rules|length }})</span>
-      <form method="POST" action="/blacklist/apply" onsubmit="return confirm('Ignorar anúncios existentes que correspondam às regras?')">
-        <button type="submit" class="btn btn-outline-warning btn-sm">Aplicar aos anúncios existentes</button>
-      </form>
+      <div class="d-flex gap-2">
+        <form id="delete-selected-form" method="POST" action="/blacklist/delete-batch">
+          <button type="submit" class="btn btn-outline-danger btn-sm" id="delete-selected-btn" disabled>Excluir selecionados</button>
+        </form>
+        <form method="POST" action="/blacklist/apply" onsubmit="return confirm('Ignorar anúncios existentes que correspondam às regras?')">
+          <button type="submit" class="btn btn-outline-warning btn-sm">Aplicar aos anúncios existentes</button>
+        </form>
+      </div>
     </div>
     <div class="card-body p-0">
       <table class="table table-striped mb-0" id="rules-table">
         <thead class="table-light">
           <tr>
-            <th style="width:50px;cursor:pointer;" onclick="sortTable(0)" id="sth-0">#</th>
-            <th style="cursor:pointer;" onclick="sortTable(1)" id="sth-1">Marca</th>
-            <th style="cursor:pointer;" onclick="sortTable(2)" id="sth-2">Modelo</th>
-            <th style="cursor:pointer;" onclick="sortTable(3)" id="sth-3">Motor</th>
-            <th style="cursor:pointer;" onclick="sortTable(4)" id="sth-4">Câmbio</th>
+            <th style="width:30px"><input type="checkbox" id="select-all" onchange="toggleAll(this)" class="form-check-input"></th>
+            <th style="width:50px;cursor:pointer;" onclick="sortTable(1)" id="sth-1">#</th>
+            <th style="cursor:pointer;" onclick="sortTable(2)" id="sth-2">Marca</th>
+            <th style="cursor:pointer;" onclick="sortTable(3)" id="sth-3">Modelo</th>
+            <th style="cursor:pointer;" onclick="sortTable(4)" id="sth-4">Motor</th>
+            <th style="cursor:pointer;" onclick="sortTable(5)" id="sth-5">Câmbio</th>
             <th style="width:80px">Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for r in rules %}
           <tr>
+            <td><input type="checkbox" name="rule_id" value="{{ r.id }}" class="form-check-input"></td>
             <td class="text-muted" style="font-size:0.85em;">{{ r.id }}</td>
             <td>{{ r.brand or 'Qualquer' }}</td>
             <td>{{ r.model or 'Qualquer' }}</td>
@@ -98,6 +105,32 @@
 </div>
 <script>
 var sortDir = {};
+function toggleAll(master) {
+  document.querySelectorAll('input[name="rule_id"]').forEach(function(cb) { cb.checked = master.checked; });
+  document.getElementById('delete-selected-btn').disabled = !master.checked;
+  document.querySelectorAll('input[name="rule_id"]').forEach(function(cb) {
+    cb.addEventListener('change', function() { updateDeleteBtn(); });
+  });
+}
+function updateDeleteBtn() {
+  var checked = document.querySelectorAll('input[name="rule_id"]:checked').length;
+  document.getElementById('delete-selected-btn').disabled = !checked;
+}
+document.querySelectorAll('input[name="rule_id"]').forEach(function(cb) {
+  cb.addEventListener('change', updateDeleteBtn);
+});
+document.getElementById('delete-selected-form').addEventListener('submit', function(e) {
+  var checked = document.querySelectorAll('input[name="rule_id"]:checked');
+  if (!checked.length) { e.preventDefault(); return; }
+  if (!confirm('Excluir ' + checked.length + ' regra(s) selecionada(s)?')) { e.preventDefault(); return; }
+  checked.forEach(function(cb) {
+    var inp = document.createElement('input');
+    inp.type = 'hidden';
+    inp.name = 'rule_id';
+    inp.value = cb.value;
+    document.getElementById('delete-selected-form').appendChild(inp);
+  });
+});
 function sortTable(col) {
   var tbody = document.querySelector('#rules-table tbody');
   var rows = Array.from(tbody.querySelectorAll('tr'));

@@ -766,6 +766,18 @@ def blacklist_apply():
     return redirect(url_for("blacklist_page"))
 
 
+@app.route("/blacklist/delete-batch", methods=["POST"])
+def blacklist_delete_batch():
+    ids = [int(v) for v in request.form.getlist("rule_id") if v.isdigit()]
+    session = get_session()
+    try:
+        session.query(BlacklistRule).filter(BlacklistRule.id.in_(ids)).delete(synchronize_session=False)
+        session.commit()
+    finally:
+        session.close()
+    return redirect(url_for("blacklist_page"))
+
+
 DB_PATH = os.path.join(_project_root, "car_listings.db")
 
 
