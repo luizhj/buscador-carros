@@ -180,6 +180,38 @@
         </div>
       </div>
       <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#steering-collapse" aria-expanded="true">
+          Direção <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="steering-collapse" style="max-height: 200px; overflow-y: auto;">
+          {% for val, count in available_steerings %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="steering_filter" value="{{ val }}" id="st-{{ loop.index }}"
+              {% if val in selected_steerings %}checked{% endif %}>
+            <label class="form-check-label" for="st-{{ loop.index }}">{{ val }} <span class="badge bg-secondary">{{ count }}</span></label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
+        <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#features-collapse" aria-expanded="true">
+          Opcionais <span class="float-end">&minus;</span>
+        </div>
+        <div class="card-body collapse show" id="features-collapse" style="max-height: 300px; overflow-y: auto;">
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="checkbox" onchange="toggleAll(this, 'features_filter')">
+            <label class="form-check-label" style="font-size:0.85em;font-weight:600;">Marcar todos</label>
+          </div>
+          {% for val, count in available_features %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="features_filter" value="{{ val }}" id="ff-{{ loop.index }}"
+              {% if val in selected_features %}checked{% endif %}>
+            <label class="form-check-label" for="ff-{{ loop.index }}">{{ val }}</label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card shadow-sm mt-2">
         <div class="card-header fw-bold" role="button" data-bs-toggle="collapse" data-bs-target="#year-collapse" aria-expanded="true">
           Ano <span class="float-end">&minus;</span>
         </div>
@@ -286,7 +318,16 @@
                 <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
                 {% endif %}
               </td>
-              <td style="white-space:normal">{{ ad.title }}{% if ad.notes %} 📝{% endif %}{% if ad.olx_id in new_ids %} <span class="badge bg-success" style="font-size:0.7em;">Novo</span>{% endif %}</td>
+              <td style="white-space:normal">{{ ad.title }}{% if ad.notes %} 📝{% endif %}{% if ad.olx_id in new_ids %} <span class="badge bg-success" style="font-size:0.7em;">Novo</span>{% endif %}
+                {%- if ad.car_steering or ad.car_features %}
+                <br><span class="text-muted" style="font-size:0.75em;">
+                  {%- set _info = [] -%}
+                  {%- if ad.car_steering %}{% set _info = _info + ['Direção: ' + ad.car_steering] %}{% endif -%}
+                  {%- if ad.car_features and 'Ar condicionado' in ad.car_features|fromjson %}{% set _info = _info + ['Ar condicionado'] %}{% endif -%}
+                  {{ _info | join(' | ') -}}
+                </span>
+                {% endif -%}
+              </td>
               <td style="white-space:nowrap">{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
               <td>{{ ad.year }}</td>
               <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>

@@ -115,6 +115,8 @@ def index():
         cartype_filter = request.args.getlist("cartype_filter")
         motorpower_filter = request.args.getlist("motorpower_filter")
         gearbox_filter = request.args.getlist("gearbox_filter")
+        steering_filter = request.args.getlist("steering_filter")
+        features_filter = request.args.getlist("features_filter")
         year_filter = [int(y) for y in request.args.getlist("year_filter") if y.isdigit()]
         y_min = _int_or_none(request.args.get("year_min"))
         y_max = _int_or_none(request.args.get("year_max"))
@@ -145,6 +147,12 @@ def index():
             q = q.filter(CarListing.year.in_(year_filter))
         if seller_type_filter:
             q = q.filter(CarListing.seller_type.in_(seller_type_filter))
+        if steering_filter:
+            q = q.filter(CarListing.car_steering.in_(steering_filter))
+        if features_filter:
+            q = q.filter(CarListing.car_features.contains(features_filter[0]))
+            for ff in features_filter[1:]:
+                q = q.filter(CarListing.car_features.contains(ff))
         if y_min:
             q = q.filter(CarListing.year >= y_min)
         if y_max:
@@ -208,6 +216,12 @@ def index():
                 r = r.filter(CarListing.transmission.in_(gearbox_filter))
             if seller_type_filter and "seller_type" not in excluded:
                 r = r.filter(CarListing.seller_type.in_(seller_type_filter))
+            if steering_filter and "steering" not in excluded:
+                r = r.filter(CarListing.car_steering.in_(steering_filter))
+            if features_filter and "features" not in excluded:
+                r = r.filter(CarListing.car_features.contains(features_filter[0]))
+                for ff in features_filter[1:]:
+                    r = r.filter(CarListing.car_features.contains(ff))
             if year_filter and "year" not in excluded:
                 r = r.filter(CarListing.year.in_(year_filter))
             if y_min and "year" not in excluded:
@@ -289,6 +303,26 @@ def index():
             .order_by(CarListing.seller_type)
             .all()
         )
+        available_steerings = (
+            _excl(q_base, "steering").with_entities(CarListing.car_steering, func.count(CarListing.id))
+            .filter(CarListing.car_steering.isnot(None))
+            .group_by(CarListing.car_steering)
+            .order_by(CarListing.car_steering)
+            .all()
+        )
+        _all_features_raw = (
+            _excl(q_base, "features").with_entities(CarListing.car_features)
+            .filter(CarListing.car_features.isnot(None))
+            .all()
+        )
+        _all_features_set = set()
+        for (row,) in _all_features_raw:
+            try:
+                for f in json.loads(row):
+                    _all_features_set.add(f)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        available_features = sorted((f, 0) for f in _all_features_set)
 
         return render_template(
             "index.html",
@@ -307,11 +341,15 @@ def index():
             available_gearboxes=_sort_selected_first(available_gearboxes, gearbox_filter),
             available_years=_sort_selected_first(available_years, year_filter),
             available_seller_types=_sort_selected_first(available_seller_types, seller_type_filter),
+            available_steerings=_sort_selected_first(available_steerings, steering_filter),
+            available_features=available_features,
             selected_cartypes=cartype_filter,
             selected_motorpowers=motorpower_filter,
             selected_gearboxes=gearbox_filter,
             selected_years=year_filter,
             selected_seller_types=seller_type_filter,
+            selected_steerings=steering_filter,
+            selected_features=features_filter,
             new_ids=_new_ids,
             scrape_result=_last_scrape_result(),
             sort=sort,
@@ -529,7 +567,8 @@ def excluded_listings():
             ~CarListing.olx_id.in_(_ignored),
         ).order_by(CarListing.updated_at.desc())
         listings = q.all()
-        return render_template("excluidos.html", listings=listings)
+        return render_template("excluidos.html", listings=listings,
+                               favorited={r[0] for r in session.query(FavoriteListing.olx_id).all()})
     finally:
         session.close()
 
@@ -565,6 +604,8 @@ def delete_listing(listing_id):
     try:
         listing = session.get(CarListing, listing_id)
         if listing:
+            if listing.olx_id:
+                session.query(FavoriteListing).filter(FavoriteListing.olx_id == listing.olx_id).delete(synchronize_session=False)
             session.delete(listing)
             session.commit()
     finally:
@@ -577,6 +618,9 @@ def delete_listing_batch():
     ids = [int(v) for v in request.form.getlist("listing_id") if v.isdigit()]
     session = get_session()
     try:
+        olx_ids = [r[0] for r in session.query(CarListing.olx_id).filter(CarListing.id.in_(ids), CarListing.olx_id.isnot(None)).all()]
+        if olx_ids:
+            session.query(FavoriteListing).filter(FavoriteListing.olx_id.in_(olx_ids)).delete(synchronize_session=False)
         session.query(CarListing).filter(CarListing.id.in_(ids)).delete(synchronize_session=False)
         session.commit()
     finally:
@@ -588,6 +632,9 @@ def delete_listing_batch():
 def clear_deleted():
     session = get_session()
     try:
+        olx_ids = [r[0] for r in session.query(CarListing.olx_id).filter(CarListing.status == "deleted", CarListing.olx_id.isnot(None)).all()]
+        if olx_ids:
+            session.query(FavoriteListing).filter(FavoriteListing.olx_id.in_(olx_ids)).delete(synchronize_session=False)
         session.query(CarListing).filter(CarListing.status == "deleted").delete(synchronize_session=False)
         session.commit()
     finally:
@@ -1013,6 +1060,8 @@ def scrape_details(olx_id):
                 "zip_code": listing.zip_code,
                 "listing_url": listing.listing_url,
                 "notes": listing.notes,
+                "car_steering": listing.car_steering,
+                "car_features": json.loads(listing.car_features) if listing.car_features else [],
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
                 "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
                 "image_url": _first_img(),

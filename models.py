@@ -44,6 +44,8 @@ class CarListing(Base):
     notes = Column(Text, default=None)
     olx_avg_price = Column(Integer, default=None)
     fipe_price = Column(Integer, default=None)
+    car_steering = Column(String, default=None)
+    car_features = Column(Text, default=None)
 
 
 class IgnoredListing(Base):
@@ -98,6 +100,14 @@ def init_db():
     if "fipe_price" not in cols:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE car_listings ADD COLUMN fipe_price INTEGER"))
+            conn.commit()
+    if "car_steering" not in cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE car_listings ADD COLUMN car_steering VARCHAR"))
+            conn.commit()
+    if "car_features" not in cols:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE car_listings ADD COLUMN car_features TEXT"))
             conn.commit()
 
 

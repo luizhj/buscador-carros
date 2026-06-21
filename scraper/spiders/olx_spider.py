@@ -57,6 +57,8 @@ class CarItem(scrapy.Item):
     image_urls = scrapy.Field()
     listing_url = scrapy.Field()
     listing_date = scrapy.Field()
+    car_steering = scrapy.Field()
+    car_features = scrapy.Field()
 
 
 class DatabasePipeline:
@@ -262,6 +264,8 @@ class OlxSpider(scrapy.Spider):
             image_urls=json.dumps(image_urls) if image_urls else None,
             listing_url=ad.get("url", ""),
             listing_date=listing_date,
+            car_steering=props.get("car_steering"),
+            car_features=json.dumps([f.strip() for f in props.get("car_features", "").split(",") if f.strip()]) if props.get("car_features") else None,
         )
 
     def _is_blacklisted(self, item):

@@ -18,6 +18,7 @@
 #detailsModal #tab-overview .table td, #detailsModal #tab-overview .table th { padding:4px 4px; }
 #detailsModal #tab-overview .col-md-8 { overflow-x:hidden; }
 #detailsModal #tab-data { overflow-x:hidden; }
+#detailsModal #tab-features { overflow-x:hidden; }
 #detailsModal #tab-data .bg-light { border:1px solid #eee; }
 </style>
 <div class="modal fade" id="detailsModal" tabindex="-1" data-bs-backdrop="static">
@@ -36,6 +37,7 @@
           <ul class="nav nav-tabs mb-3" id="detailsTabs" role="tablist">
             <li class="nav-item"><button class="nav-link active" id="tab-overview-btn" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">Visão Geral</button></li>
             <li class="nav-item"><button class="nav-link" id="tab-data-btn" data-bs-toggle="tab" data-bs-target="#tab-data" type="button">Dados do Anúncio</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-features-btn" data-bs-toggle="tab" data-bs-target="#tab-features" type="button">Opcionais</button></li>
             <li class="nav-item"><button class="nav-link" id="tab-notes-btn" data-bs-toggle="tab" data-bs-target="#tab-notes" type="button">Observação</button></li>
           </ul>
           <div class="tab-content flex-grow-1" style="min-height:0;">
@@ -56,6 +58,7 @@
                 <div class="col-md-8" style="overflow-y:auto;">
                   <h5 id="det-title" class="mb-2" style="font-size:1em;"></h5>
                   <p class="text-muted small mb-2"><span id="det-city"></span><span id="det-neighborhood-sep"></span><span id="det-neighborhood"></span><span id="det-seller-sep"></span><span id="det-seller-type"></span></p>
+                  <p class="text-muted small mb-2"><span id="det-steering"></span><span id="det-features-sep"></span><span id="det-features"></span></p>
                   <div class="mb-2">
                     <table class="table table-bordered table-sm text-center" style="font-size:0.75em;">
                       <thead class="table-light">
@@ -79,6 +82,9 @@
             </div>
             <div class="tab-pane fade" id="tab-data">
               <div id="det-data-table"></div>
+            </div>
+            <div class="tab-pane fade" id="tab-features">
+              <div id="det-features-list"></div>
             </div>
             <div class="tab-pane fade h-100" id="tab-notes">
               <div class="d-flex flex-column h-100">
@@ -211,6 +217,19 @@ function openDetails(olxId, dbId, force) {
     }
     document.getElementById('det-description').textContent = data.description || '(sem descrição)';
     document.getElementById('det-notes').value = data.notes || '';
+    var steering = data.car_steering;
+    var feats = data.car_features || [];
+    var hasAr = feats.some(function(f) { return typeof f === 'string' && f.toLowerCase() === 'ar condicionado'; });
+    var parts = [];
+    if (steering) parts.push('Direção: ' + steering);
+    if (hasAr) parts.push('Ar condicionado');
+    document.getElementById('det-steering').textContent = parts.join(' | ') || '';
+    document.getElementById('det-features-sep').textContent = '';
+    document.getElementById('det-features').textContent = '';
+    var featHtml = feats.length ? '<div class="row g-2">' + feats.map(function(f) {
+      return '<div class="col-md-4"><div class="p-2 bg-light rounded" style="font-size:0.85em;">' + f + '</div></div>';
+    }).join('') + '</div>' : '<p class="text-muted">Nenhum opcional informado.</p>';
+    document.getElementById('det-features-list').innerHTML = featHtml;
     document.getElementById('det-open-url').href = data.listing_url || '#';
     detImages = data.image_urls && data.image_urls.length ? data.image_urls : (data.image_url ? [data.image_url] : []);
     var carouselEl = document.getElementById('det-carousel');

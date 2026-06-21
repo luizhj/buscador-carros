@@ -23,6 +23,7 @@
       <thead class="table-dark">
         <tr>
           <th style="width:3%"><input type="checkbox" id="select-all" onchange="toggleAll(this)" class="form-check-input"></th>
+          <th style="width:3%">Fav</th>
           <th style="width:8%">Foto</th>
           <th style="width:23%">Título</th>
           <th style="width:10%">Preço</th>
@@ -37,6 +38,11 @@
         {% for ad in listings %}
         <tr class="table-danger">
           <td><input type="checkbox" name="select_listing" value="{{ ad.id }}" class="form-check-input" style="margin-top:8px;"></td>
+          <td style="text-align:center;vertical-align:middle;">
+            <button type="button" class="btn btn-sm p-0 border-0 fs-5" onclick="toggleFav({{ ad.id }})"
+              style="color:{% if ad.olx_id in favorited %}red{% else %}#ccc{% endif %};line-height:1;"
+              id="fav-{{ ad.id }}">♥</button>
+          </td>
           <td>
             {% if ad.image_urls %}
             {% set imgs = ad.image_urls|fromjson %}
@@ -54,7 +60,7 @@
         </tr>
         {% endfor %}
         {% if not listings %}
-        <tr><td colspan="9" class="text-muted text-center">Nenhum anúncio excluído.</td></tr>
+        <tr><td colspan="10" class="text-muted text-center">Nenhum anúncio excluído.</td></tr>
         {% endif %}
       </tbody>
     </table>
@@ -63,6 +69,12 @@
 <script>
 function toggleAll(master) {
   document.querySelectorAll('input[name="select_listing"]').forEach(cb => cb.checked = master.checked);
+}
+async function toggleFav(id) {
+  const btn = document.getElementById('fav-' + id);
+  const isFav = btn.style.color === 'red';
+  await fetch('/' + (isFav ? 'unfavorite' : 'favorite') + '/' + id, { method: 'POST' });
+  btn.style.color = isFav ? '#ccc' : 'red';
 }
 document.getElementById('restore-selected').onclick = async function() {
   const checked = document.querySelectorAll('input[name="select_listing"]:checked');
