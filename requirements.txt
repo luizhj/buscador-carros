@@ -2,3 +2,4 @@ scrapy>=2.11
 flask>=3.0
 sqlalchemy>=2.0
 cloudscraper>=1.2
+playwright>=1.50
