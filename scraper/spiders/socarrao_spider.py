@@ -189,11 +189,11 @@ class SocarraoSpider(scrapy.Spider):
         fuel = specs[3] if len(specs) > 3 else None
 
         raw_image = card.css("img::attr(src)").get()
-        if raw_image:
+        if raw_image and "vehicle_sample" not in raw_image:
             clean = raw_image.split("?")[0]
             image_urls = json.dumps([clean])
         else:
-            image_urls = None
+            return None
 
         raw_json = self._extract_jsonld(card)
         price = None
