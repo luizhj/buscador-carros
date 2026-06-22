@@ -32,6 +32,7 @@ class SocarraoItem(scrapy.Item):
     listing_url = scrapy.Field()
     source = scrapy.Field()
     motorpower = scrapy.Field()
+    cartype = scrapy.Field()
 
 
 class DatabasePipeline:
@@ -215,6 +216,25 @@ class SocarraoSpider(scrapy.Spider):
                 transmission = "Manual"
             elif " semi" in _title_lower:
                 transmission = "Semi-Automático"
+        cartype = None
+        if version:
+            _v_lower = version.lower()
+            if "sedan" in _v_lower or "sed." in _v_lower:
+                cartype = "Sedã"
+            elif "hatch" in _v_lower:
+                cartype = "Hatch"
+            elif "suv" in _v_lower:
+                cartype = "SUV"
+            elif "pick-up" in _v_lower or "pickup" in _v_lower:
+                cartype = "Pick-up"
+            elif "convers" in _v_lower:
+                cartype = "Conversível"
+            elif "coupe" in _v_lower or "coupé" in _v_lower:
+                cartype = "Coupé"
+            elif "perua" in _v_lower or "wagon" in _v_lower:
+                cartype = "Perua"
+            elif "minivan" in _v_lower or "van" in _v_lower:
+                cartype = "Van/Utilitário"
 
         raw_image = card.css("img::attr(src)").get()
         if raw_image and "vehicle_sample" not in raw_image:
@@ -276,6 +296,7 @@ class SocarraoSpider(scrapy.Spider):
             listing_url=listing_url,
             source="socarrao",
             motorpower=motorpower,
+            cartype=cartype,
         )
 
     def _extract_jsonld(self, card):
