@@ -355,13 +355,15 @@ class SocarraoSpider(scrapy.Spider):
     def _clean_transmission(self, raw):
         if not raw:
             return None
-        raw = raw.strip().lower()
+        raw = raw.strip().lower().replace(".", "")
         mapping = {
             "automático": "Automático",
             "automatico": "Automático",
+            "aut": "Automático",
             "manual": "Manual",
             "mecânico": "Manual",
             "mecanico": "Manual",
+            "mec": "Manual",
             "semi-automático": "Semi-Automático",
             "semi-automatico": "Semi-Automático",
             "automatizado": "Automatizado",
