@@ -877,6 +877,15 @@ def save_socarrao_url():
     return redirect(url_for("config_page"))
 
 
+@app.route("/save-cidades", methods=["POST"])
+def save_cidades():
+    cidades_raw = request.form.get("cidades", "").strip()
+    cidades = [c.strip() for c in cidades_raw.split("\n") if c.strip()]
+    with open(CIDADES_PATH, "w") as f:
+        json.dump(cidades, f, indent=2, ensure_ascii=False)
+    return redirect(url_for("config_page"))
+
+
 LOG_FILE = os.path.join(_project_root, "scrape.log")
 
 

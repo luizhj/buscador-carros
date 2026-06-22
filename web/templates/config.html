@@ -12,6 +12,19 @@
   <a href="/" class="btn btn-outline-secondary mb-2">&larr; Voltar para listagem</a>
 
   <div class="card shadow-sm">
+    <div class="card-header fw-bold">Estatísticas</div>
+    <div class="card-body">
+      <div class="row g-2 text-center">
+        <div class="col-4 col-md-2"><strong>{{ stats.active }}</strong><br><small class="text-muted">Ativos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.deleted }}</strong><br><small class="text-muted">Excluídos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.ignored }}</strong><br><small class="text-muted">Ignorados</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.favorited }}</strong><br><small class="text-muted">Favoritos</small></div>
+        <div class="col-4 col-md-2"><strong>{{ stats.total }}</strong><br><small class="text-muted">Total</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-3">
     <div class="card-body">
       <form method="POST" action="/run-scrape">
         <div class="mb-3">
@@ -21,13 +34,8 @@
             <a href="{{ current_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary">Abrir</a>
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label fw-bold">Cidades permitidas</label>
-          <textarea name="cidades" class="form-control" rows="4">{{ cidades }}</textarea>
-          <small class="text-muted">Uma cidade por linha. Deixe vazio para salvar todas.</small>
-        </div>
-        <button type="submit" formaction="/run-scrape" class="btn btn-primary">Salvar e Atualizar</button>
-        <button type="submit" formaction="/run-scrape-only" class="btn btn-outline-primary">Somente atualizar anúncios</button>
+        <button type="submit" formaction="/run-scrape" class="btn btn-primary">Salvar e Atualizar (OLX)</button>
+        <button type="submit" formaction="/run-scrape-only" class="btn btn-outline-primary">Somente atualizar anúncios (OLX)</button>
       </form>
     </div>
   </div>
@@ -50,15 +58,15 @@
   </div>
 
   <div class="card shadow-sm mt-3">
-    <div class="card-header fw-bold">Estatísticas</div>
+    <div class="card-header fw-bold">Cidades permitidas</div>
     <div class="card-body">
-      <div class="row g-2 text-center">
-        <div class="col-4 col-md-2"><strong>{{ stats.active }}</strong><br><small class="text-muted">Ativos</small></div>
-        <div class="col-4 col-md-2"><strong>{{ stats.deleted }}</strong><br><small class="text-muted">Excluídos</small></div>
-        <div class="col-4 col-md-2"><strong>{{ stats.ignored }}</strong><br><small class="text-muted">Ignorados</small></div>
-        <div class="col-4 col-md-2"><strong>{{ stats.favorited }}</strong><br><small class="text-muted">Favoritos</small></div>
-        <div class="col-4 col-md-2"><strong>{{ stats.total }}</strong><br><small class="text-muted">Total</small></div>
-      </div>
+      <form method="POST" action="/save-cidades">
+        <div class="mb-3">
+          <textarea name="cidades" class="form-control" rows="4">{{ cidades }}</textarea>
+          <small class="text-muted">Uma cidade por linha. Deixe vazio para aceitar todas.</small>
+        </div>
+        <button type="submit" class="btn btn-outline-primary">Salvar cidades</button>
+      </form>
     </div>
   </div>
 
