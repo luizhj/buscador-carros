@@ -840,6 +840,12 @@ def config_page():
         from config import START_URL
         url = START_URL
     try:
+        with open(CURRENT_URL_SOCARRAO_FILE) as f:
+            socarrao_url = f.read().strip()
+    except FileNotFoundError:
+        from config import SOCARRAO_URL
+        socarrao_url = SOCARRAO_URL
+    try:
         with open(CIDADES_PATH) as f:
             cidades = "\n".join(json.load(f))
     except (FileNotFoundError, json.JSONDecodeError):
@@ -855,7 +861,16 @@ def config_page():
         }
     finally:
         session.close()
-    return render_template("config.html", current_url=url, cidades=cidades, stats=stats)
+    return render_template("config.html", current_url=url, socarrao_url=socarrao_url, cidades=cidades, stats=stats)
+
+
+@app.route("/save-socarrao-url", methods=["POST"])
+def save_socarrao_url():
+    url = request.form.get("socarrao_url", "").strip()
+    if url:
+        with open(CURRENT_URL_SOCARRAO_FILE, "w") as f:
+            f.write(url)
+    return redirect(url_for("config_page"))
 
 
 LOG_FILE = os.path.join(_project_root, "scrape.log")
@@ -863,6 +878,7 @@ LOG_FILE = os.path.join(_project_root, "scrape.log")
 
 CIDADES_PATH = os.path.join(_project_root, "cidades_permitidas.json")
 CURRENT_URL_FILE = os.path.join(_project_root, ".current_url")
+CURRENT_URL_SOCARRAO_FILE = os.path.join(_project_root, ".current_url_socarrao")
 SCRAPE_RESULT_FILE = os.path.join(_project_root, ".last_scrape.json")
 
 
@@ -879,6 +895,32 @@ def _save_scrape_result(start_time):
             json.dump({"count": count, "finished_at": datetime.now(tz=timezone.utc).isoformat(), "elapsed": elapsed}, f)
     except Exception:
         pass
+
+
+def _run_socarrao_scraper_background(url, clear):
+    """Roda o scraper SóCarrão em background."""
+    _start = datetime.now(tz=timezone.utc)
+    with open(CURRENT_URL_SOCARRAO_FILE, "w") as f:
+        f.write(url)
+    with open(LOG_FILE, "w") as f:
+        f.write(f"URL: {url}\n")
+        if clear:
+            session = get_session()
+            removed = session.query(CarListing).filter(CarListing.source == "socarrao").delete(synchronize_session=False)
+            session.commit()
+            session.close()
+            f.write(f"Anúncios SóCarrão removidos ({removed})\n\n")
+        else:
+            f.write("Atualizando anúncios existentes...\n\n")
+        f.flush()
+    with open(LOG_FILE, "a") as f:
+        proc = subprocess.Popen(
+            [sys.executable, "-u", os.path.join(_project_root, "run_scraper_socarrao.py")],
+            stdout=f, stderr=subprocess.STDOUT,
+            text=True, cwd=_project_root,
+        )
+        proc.wait()
+    _save_scrape_result(_start)
 
 
 def _run_scraper_background(url, cidades):
@@ -971,6 +1013,24 @@ def run_scrape_only():
     cidades_raw = request.form.get("cidades", "").strip()
     cidades = [c.strip() for c in cidades_raw.split("\n") if c.strip()]
     threading.Thread(target=_run_scraper_background_noclear, args=(url, cidades), daemon=True).start()
+    return redirect(url_for("scraping_page"))
+
+
+@app.route("/run-scrape-socarrao", methods=["POST"])
+def run_scrape_socarrao():
+    url = request.form.get("socarrao_url", "").strip()
+    if not url:
+        return redirect(url_for("config_page"))
+    threading.Thread(target=_run_socarrao_scraper_background, args=(url, True), daemon=True).start()
+    return redirect(url_for("scraping_page"))
+
+
+@app.route("/run-scrape-socarrao-only", methods=["POST"])
+def run_scrape_socarrao_only():
+    url = request.form.get("socarrao_url", "").strip()
+    if not url:
+        return redirect(url_for("config_page"))
+    threading.Thread(target=_run_socarrao_scraper_background, args=(url, False), daemon=True).start()
     return redirect(url_for("scraping_page"))
 
 

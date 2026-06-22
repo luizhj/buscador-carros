@@ -11,7 +11,7 @@ _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from config import SOCARRAO_URL
+from config import SOCARRAO_URL as _FALLBACK_SOCARRAO_URL
 from models import CarListing, IgnoredListing, get_session
 
 
@@ -62,7 +62,14 @@ class SocarraoSpider(scrapy.Spider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._start_url = kwargs.get("start_url") or SOCARRAO_URL
+        saved_url = None
+        _path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", ".current_url_socarrao")
+        try:
+            with open(os.path.normpath(_path)) as _f:
+                saved_url = _f.read().strip()
+        except (FileNotFoundError, OSError):
+            pass
+        self._start_url = kwargs.get("start_url") or saved_url or _FALLBACK_SOCARRAO_URL
         self._max_items = int(kwargs.get("max_items", 60))
 
     def start_requests(self):

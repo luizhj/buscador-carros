@@ -33,6 +33,23 @@
   </div>
 
   <div class="card shadow-sm mt-3">
+    <div class="card-body">
+      <form method="POST" action="/run-scrape-socarrao">
+        <div class="mb-3">
+          <label class="form-label fw-bold">URL de pesquisa (SóCarrão)</label>
+          <div class="input-group">
+            <input type="url" name="socarrao_url" class="form-control" value="{{ socarrao_url }}" id="search-url-socarrao">
+            <a href="{{ socarrao_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary">Abrir</a>
+          </div>
+          <small class="text-muted">Usado pelo scraper SóCarrão</small>
+        </div>
+        <button type="submit" formaction="/run-scrape-socarrao" class="btn btn-primary">Salvar e Atualizar (SóCarrão)</button>
+        <button type="submit" formaction="/run-scrape-socarrao-only" class="btn btn-outline-primary">Somente atualizar anúncios (SóCarrão)</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-3">
     <div class="card-header fw-bold">Estatísticas</div>
     <div class="card-body">
       <div class="row g-2 text-center">
