@@ -18,12 +18,16 @@ if os.path.exists(_current_file):
 
 init_db()
 
-# coleta ids ativos antes do scrape
+# coleta ids ativos antes do scrape (apenas OLX)
 session = get_session()
 before_ids = {
     r[0] for r in
     session.query(CarListing.olx_id)
-    .filter(CarListing.status == "active", CarListing.olx_id.isnot(None))
+    .filter(
+        CarListing.status == "active",
+        CarListing.olx_id.isnot(None),
+        (CarListing.source == "olx") | (CarListing.source.is_(None)),
+    )
     .all()
 }
 session.close()
@@ -51,6 +55,7 @@ if deleted:
     session2.query(CarListing).filter(
         CarListing.olx_id.in_(deleted),
         CarListing.olx_id.isnot(None),
+        (CarListing.source == "olx") | (CarListing.source.is_(None)),
     ).update({"status": "deleted"}, synchronize_session=False)
     session2.commit()
     session2.close()
