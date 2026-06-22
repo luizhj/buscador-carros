@@ -1167,6 +1167,26 @@ def scrape_details(olx_id):
                         if _de:
                             _raw = _de.text_content().strip()
                             description = _raw if _raw and "N\u00e3o h\u00e1 descri\u00e7\u00e3o" not in _raw else None
+
+                        _about_pairs = _p.locator(".about-vehicle-section__information > div").all()
+                        _about_map = {}
+                        for _pair in _about_pairs:
+                            _label = _pair.locator("h3").text_content().strip().lower()
+                            _value = _pair.locator("p").text_content().strip()
+                            _about_map[_label] = _value
+
+                        if "cor" in _about_map and not listing.color:
+                            listing.color = _about_map["cor"]
+                        if "combust\u00edvel" in _about_map and not listing.fuel:
+                            listing.fuel = _about_map["combust\u00edvel"]
+                        if "c\u00e2mbio" in _about_map and not listing.transmission:
+                            listing.transmission = _about_map["c\u00e2mbio"]
+
+                        _acc_items = _p.locator(".acessories-and-options-vehicle__list li").all()
+                        if _acc_items:
+                            _feats = [li.text_content().strip() for li in _acc_items if li.text_content().strip()]
+                            if _feats:
+                                listing.car_features = json.dumps(_feats)
                     finally:
                         _b.close()
             except Exception as _e:
