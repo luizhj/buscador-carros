@@ -1104,6 +1104,8 @@ def scrape_details(olx_id):
         if not listing or not listing.listing_url:
             return {"error": "Anúncio não encontrado"}, 404
 
+        _original_updated_at = listing.updated_at
+
         def _first_img():
             if listing.image_urls:
                 try:
@@ -1271,6 +1273,14 @@ def scrape_details(olx_id):
         listing.olx_avg_price = olx_avg_price
         listing.fipe_price = fipe_price
         session.commit()
+        if _original_updated_at:
+            from sqlalchemy import text
+            session.execute(
+                text("UPDATE car_listings SET updated_at = :dt WHERE olx_id = :oid"),
+                {"dt": _original_updated_at, "oid": olx_id},
+            )
+            session.commit()
+            session.refresh(listing)
 
         return _listing_fields(description, False)
     finally:
