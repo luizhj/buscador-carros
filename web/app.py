@@ -1250,6 +1250,22 @@ def scrape_details(olx_id):
                                     _st = _ft.replace("Dire\u00e7\u00e3o", "").strip()
                                     if _st and not listing.car_steering:
                                         listing.car_steering = _st
+
+                        _gal_imgs = _p.locator(".pictures-vehicle-image__img img").all()
+                        if _gal_imgs:
+                            _gal_urls = []
+                            for _gi in _gal_imgs:
+                                _src = (_gi.get_attribute("src") or "").split("?")[0]
+                                if _src and "sc-vehicle-images-prod" in _src:
+                                    _gal_urls.append(_src)
+                            _seen = set()
+                            _uniq = []
+                            for u in _gal_urls:
+                                if u not in _seen:
+                                    _seen.add(u)
+                                    _uniq.append(u)
+                            if _uniq:
+                                listing.image_urls = json.dumps(_uniq)
                     finally:
                         _b.close()
             except Exception as _e:
