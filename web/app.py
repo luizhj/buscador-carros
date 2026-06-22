@@ -941,13 +941,22 @@ def _run_socarrao_scraper_background(url, clear):
 def _run_scraper_background(url, cidades):
     """Roda o scraper em background escrevendo log em arquivo."""
     _start = datetime.now(tz=timezone.utc)
-    from clear_db import clear_db
-    removed = clear_db()
+    _s = get_session()
+    _ign = _s.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+    _fav = _s.query(FavoriteListing.olx_id).filter(FavoriteListing.olx_id.isnot(None))
+    _preserved = _ign.union(_fav)
+    removed = _s.query(CarListing).filter(
+        CarListing.olx_id.isnot(None),
+        ~CarListing.olx_id.in_(_preserved),
+        (CarListing.source == "olx") | (CarListing.source.is_(None)),
+    ).delete(synchronize_session=False)
+    _s.commit()
+    _s.close()
     with open(CURRENT_URL_FILE, "w") as f:
         f.write(url)
     with open(LOG_FILE, "w") as f:
         f.write(f"URL: {url}\n")
-        f.write(f"Banco limpo ({removed} registros removidos)\n\n")
+        f.write(f"Anúncios OLX removidos ({removed})\n\n")
         f.flush()
     env = {**os.environ, "SCRAPE_URL": url, "SCRAPE_START": _start.isoformat()}
     with open(LOG_FILE, "a") as f:
