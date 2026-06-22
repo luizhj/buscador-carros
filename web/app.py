@@ -920,10 +920,17 @@ def _run_socarrao_scraper_background(url, clear):
     with open(LOG_FILE, "w") as f:
         f.write(f"URL: {url}\n")
         if clear:
-            session = get_session()
-            removed = session.query(CarListing).filter(CarListing.source == "socarrao").delete(synchronize_session=False)
-            session.commit()
-            session.close()
+            _s = get_session()
+            _ign = _s.query(IgnoredListing.olx_id).filter(IgnoredListing.olx_id.isnot(None))
+            _fav = _s.query(FavoriteListing.olx_id).filter(FavoriteListing.olx_id.isnot(None))
+            _preserved = _ign.union(_fav)
+            removed = _s.query(CarListing).filter(
+                CarListing.olx_id.isnot(None),
+                ~CarListing.olx_id.in_(_preserved),
+                CarListing.source == "socarrao",
+            ).delete(synchronize_session=False)
+            _s.commit()
+            _s.close()
             f.write(f"Anúncios SóCarrão removidos ({removed})\n\n")
         else:
             f.write("Atualizando anúncios existentes...\n\n")
