@@ -31,6 +31,7 @@ class SocarraoItem(scrapy.Item):
     image_urls = scrapy.Field()
     listing_url = scrapy.Field()
     source = scrapy.Field()
+    motorpower = scrapy.Field()
 
 
 class DatabasePipeline:
@@ -180,6 +181,16 @@ class SocarraoSpider(scrapy.Spider):
         model = card.css(".brand-model-formatter__model::text").get("").strip()
         version = card.css(".vehicle-card__right--version::text").get("").strip()
         title = f"{brand} {model} {version}".strip() if version else f"{brand} {model}".strip()
+        motorpower = None
+        if version:
+            for _m in re.findall(r'(\d+[.,]\d+)', version):
+                try:
+                    _v = float(_m.replace(",", "."))
+                    if 0.5 <= _v <= 8.0:
+                        motorpower = f"{_v:.1f}"
+                        break
+                except ValueError:
+                    pass
 
         specs = card.css(".vehicle-card__right--specs li::text").getall()
         specs = [s.strip() for s in specs]
@@ -247,6 +258,7 @@ class SocarraoSpider(scrapy.Spider):
             image_urls=image_urls,
             listing_url=listing_url,
             source="socarrao",
+            motorpower=motorpower,
         )
 
     def _extract_jsonld(self, card):

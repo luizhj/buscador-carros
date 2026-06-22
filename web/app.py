@@ -1190,8 +1190,23 @@ def scrape_details(olx_id):
                                        "suv": "SUV", "conversível": "Conversível", "conversivel": "Conversível",
                                        "coupé": "Coupé", "coupe": "Coupé", "perua": "Perua",
                                        "van/utilitário": "Van/Utilitário", "van": "Van/Utilitário",
+                                       "minivan": "Van/Utilitário",
                                        "caminhão leve": "Caminhão Leve", "buggy": "Buggy"}
                             listing.cartype = _ct_map.get(_ct.lower(), _ct)
+
+                        if not listing.motorpower:
+                            for _sj in _p.locator('script[type="application/ld+json"]').all():
+                                try:
+                                    _jd = json.loads(_sj.text_content())
+                                    _vc = _jd.get("vehicleConfiguration") or _jd.get("name", "")
+                                    if isinstance(_vc, str):
+                                        for _m in re.findall(r'(\d+[.,]\d+)', _vc):
+                                            _v = float(_m.replace(",", "."))
+                                            if 0.5 <= _v <= 8.0:
+                                                listing.motorpower = f"{_v:.1f}"
+                                                break
+                                except Exception:
+                                    pass
 
                         _ver_mais = _p.locator(".acessories-and-options-vehicle details summary").first
                         if _ver_mais:
