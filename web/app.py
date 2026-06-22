@@ -1158,23 +1158,17 @@ def scrape_details(olx_id):
             import time as _time
             try:
                 with sync_playwright() as _pw:
-                    _browser = _pw.chromium.launch(headless=True, timeout=20000)
-                    _page = _browser.new_page()
-                    _page.goto(listing.listing_url, wait_until="domcontentloaded", timeout=30000)
-                    _time.sleep(3)
-                    for _s in _page.locator('script[type="application/ld+json"]').all():
-                        try:
-                            _data = json.loads(_s.text_content())
-                            if _data.get("description"):
-                                description = _data["description"].strip()
-                                break
-                        except (json.JSONDecodeError, ValueError, TypeError):
-                            pass
-                    if not description:
-                        _desc_el = _page.locator("[class*=description]").first
-                        if _desc_el:
-                            description = _desc_el.text_content().strip() or None
-                    _browser.close()
+                    _b = _pw.chromium.launch(headless=True, timeout=20000)
+                    try:
+                        _p = _b.new_page()
+                        _p.goto(listing.listing_url, wait_until="domcontentloaded", timeout=30000)
+                        _time.sleep(3)
+                        _de = _p.locator("[class*=description]").first
+                        if _de:
+                            _raw = _de.text_content().strip()
+                            description = _raw if _raw and "N\u00e3o h\u00e1 descri\u00e7\u00e3o" not in _raw else None
+                    finally:
+                        _b.close()
             except Exception as _e:
                 return {"error": f"Erro ao acessar SóCarrão: {_e}"}, 502
         else:
