@@ -35,7 +35,7 @@
             <img src="/img-proxy?url={{ imgs[0] | urlencode }}" width="80" class="rounded" loading="lazy">
             {% endif %}
           </td>
-          <td style="white-space:normal">{{ ad.title }}{% if ad.status == 'deleted' %} <span class="badge bg-danger" style="font-size:0.7em;">Excluído</span>{% endif %}</td>
+          <td style="white-space:normal">{{ ad.title }}{% if ad.status == 'deleted' %} <span class="badge bg-danger" style="font-size:0.7em;">Excluído</span>{% endif %}{% if ad.source == 'socarrao' %} <span class="badge" style="font-size:0.65em;background:#ffc107;color:#000;">SóCarrão</span>{% elif ad.source %} <span class="badge" style="font-size:0.65em;background:#6f42c1;color:#fff;">OLX</span>{% endif %}</td>
           <td style="white-space:nowrap">{% if ad.price %}{{ ad.price | brl }}{% else %}-{% endif %}</td>
           <td>{{ ad.year }}</td>
           <td>{{ "{:,}".format(ad.mileage).replace(',', '.') if ad.mileage else '-' }}</td>
