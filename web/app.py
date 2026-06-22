@@ -1228,6 +1228,12 @@ def scrape_details(olx_id):
                             _feats = [li.text_content().strip() for li in _acc_items if li.text_content().strip()]
                             if _feats:
                                 listing.car_features = json.dumps(_feats)
+                            for _ft in _feats:
+                                _ft_lower = _ft.lower()
+                                if "dire\u00e7\u00e3o" in _ft_lower:
+                                    _st = _ft.replace("Dire\u00e7\u00e3o", "").strip()
+                                    if _st and not listing.car_steering:
+                                        listing.car_steering = _st
                     finally:
                         _b.close()
             except Exception as _e:
