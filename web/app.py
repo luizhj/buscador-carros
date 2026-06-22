@@ -1181,6 +1181,8 @@ def scrape_details(olx_id):
                             listing.fuel = _about_map["combust\u00edvel"]
                         if "c\u00e2mbio" in _about_map and not listing.transmission:
                             listing.transmission = _about_map["c\u00e2mbio"]
+                        if "carroceria" in _about_map and not listing.cartype:
+                            listing.cartype = _about_map["carroceria"]
 
                         _acc_items = _p.locator(".acessories-and-options-vehicle__list li").all()
                         if _acc_items:
