@@ -1166,7 +1166,10 @@ def scrape_details(olx_id):
                         _de = _p.locator("[class*=description]").first
                         if _de:
                             _raw = _de.text_content().strip()
-                            description = _raw if _raw and "N\u00e3o h\u00e1 descri\u00e7\u00e3o" not in _raw else None
+                            _raw = _raw.replace("Descri\u00e7\u00e3o", "", 1).strip()
+                            if _raw and "N\u00e3o h\u00e1 descri\u00e7\u00e3o" in _raw:
+                                _raw = None
+                            description = _raw
 
                         _about_pairs = _p.locator(".about-vehicle-section__information > div").all()
                         _about_map = {}
