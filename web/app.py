@@ -52,7 +52,11 @@ app.jinja_env.filters["brl"] = _brl
 @app.route("/img-proxy")
 def img_proxy():
     url = request.args.get("url")
-    if not url or not url.startswith("https://img.olx.com.br"):
+    allowed = (
+        url.startswith("https://img.olx.com.br") or
+        url.startswith("https://www.socarrao.com.br/sc-vehicle-images-prod/")
+    )
+    if not url or not allowed:
         return ("", 400)
     req = urllib.request.Request(url, headers={"User-Agent": _UA})
     resp = urllib.request.urlopen(req)

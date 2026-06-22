@@ -107,7 +107,7 @@ class SocarraoSpider(scrapy.Spider):
                 prev = 0
                 same_count = 0
                 last_html = None
-                for scroll_round in range(100):
+                for scroll_round in range(50):
                     cards = page.locator(".vehicle-card")
                     current = cards.count()
                     if current > 0 and current != prev:
@@ -123,21 +123,29 @@ class SocarraoSpider(scrapy.Spider):
                         print(f"\n    Nenhum novo veículo após {same_count} tentativas.", flush=True)
                         break
                     prev = current
-                    if scroll_round % 10 == 0:
+                    if scroll_round % 10 == 0 and scroll_round > 0:
                         try:
                             last_html = page.content()
                         except Exception:
                             pass
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    try:
+                        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                    except Exception as _e:
+                        print(f"  Navegador desconectado durante scroll: {_e}", flush=True)
+                        break
                     _time.sleep(1.5)
 
                 try:
                     html = page.content()
+                    browser.close()
+                    return html
                 except Exception as _e:
-                    print(f"  Erro ao capturar HTML final: {_e}", flush=True)
-                    html = last_html
-                browser.close()
-                return html
+                    print(f"  Capturando HTML do snapshot ({len(last_html or '')} chars)", flush=True)
+                    try:
+                        browser.close()
+                    except Exception:
+                        pass
+                    return last_html
         except Exception as e:
             print(f"  ERRO no navegador: {e}", flush=True)
             return None
@@ -180,17 +188,24 @@ class SocarraoSpider(scrapy.Spider):
         mileage = self._parse_mileage(specs[2]) if len(specs) > 2 else None
         fuel = specs[3] if len(specs) > 3 else None
 
+        raw_image = card.css("img::attr(src)").get()
+        if raw_image:
+            clean = raw_image.split("?")[0]
+            image_urls = json.dumps([clean])
+        else:
+            image_urls = None
+
         raw_json = self._extract_jsonld(card)
         price = None
-        image_urls = None
         if raw_json:
             try:
                 data = json.loads(raw_json)
                 raw_price = (data.get("offers") or {}).get("price", "0")
                 price = self._parse_price(raw_price)
-                raw_image = data.get("image", "")
-                if raw_image:
-                    image_urls = json.dumps([raw_image])
+                if not image_urls:
+                    raw_image = data.get("image", "")
+                    if raw_image:
+                        image_urls = json.dumps([raw_image])
             except (json.JSONDecodeError, ValueError):
                 pass
         if price is None:
