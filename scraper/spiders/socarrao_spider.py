@@ -93,7 +93,7 @@ class SocarraoSpider(scrapy.Spider):
                 page.goto(url, wait_until="domcontentloaded", timeout=30000)
 
                 import time as _time
-                _time.sleep(2)
+                _time.sleep(3)
 
                 h1 = page.locator("h1").first.text_content() or ""
                 import re as _re
@@ -106,6 +106,7 @@ class SocarraoSpider(scrapy.Spider):
 
                 prev = 0
                 same_count = 0
+                last_html = None
                 for scroll_round in range(100):
                     cards = page.locator(".vehicle-card")
                     current = cards.count()
@@ -122,10 +123,19 @@ class SocarraoSpider(scrapy.Spider):
                         print(f"\n    Nenhum novo veículo após {same_count} tentativas.", flush=True)
                         break
                     prev = current
+                    if scroll_round % 10 == 0:
+                        try:
+                            last_html = page.content()
+                        except Exception:
+                            pass
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                     _time.sleep(1.5)
 
-                html = page.content()
+                try:
+                    html = page.content()
+                except Exception as _e:
+                    print(f"  Erro ao capturar HTML final: {_e}", flush=True)
+                    html = last_html
                 browser.close()
                 return html
         except Exception as e:
@@ -149,7 +159,7 @@ class SocarraoSpider(scrapy.Spider):
                 yield item
 
     def _item_from_card(self, card):
-        detail_url = card.css("a::attr(href)").get()
+        detail_url = card.attrib.get("href") or card.css("a::attr(href)").get()
         oid = None
         if detail_url:
             m = re.search(r"/(\d+)/?$", detail_url)
