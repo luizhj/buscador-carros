@@ -25,7 +25,7 @@
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Detalhes do Anúncio</h5>
+        <h5 class="modal-title"><span id="det-source-badge" class="badge me-2" style="font-size:0.55em;">OLX</span>Detalhes do Anúncio</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="detailsBody">
@@ -200,6 +200,19 @@ function openDetails(olxId, dbId, force) {
       pctEl.className = '';
     }
     document.getElementById('det-title').textContent = data.title || '';
+    var badge = document.getElementById('det-source-badge');
+    if (badge) {
+      badge.textContent = data.source === 'socarrao' ? 'SóCarrão' : 'OLX';
+      badge.className = 'badge me-2';
+      badge.style.fontSize = '0.55em';
+      if (data.source === 'socarrao') {
+        badge.style.backgroundColor = '#dc3545';
+        badge.style.color = '#fff';
+      } else {
+        badge.style.backgroundColor = '#0d6efd';
+        badge.style.color = '#fff';
+      }
+    }
     var kmEl = document.getElementById('det-title');
     if (data.mileage != null) kmEl.textContent += ' — ' + data.mileage.toLocaleString('pt-BR') + ' km';
     var loc = [];
@@ -226,6 +239,7 @@ function openDetails(olxId, dbId, force) {
     document.getElementById('det-steering').textContent = parts.join(' | ') || '';
     document.getElementById('det-features-sep').textContent = '';
     document.getElementById('det-features').textContent = '';
+    feats.sort(function(a, b) { return a.localeCompare(b); });
     var featHtml = feats.length ? '<div class="row g-2">' + feats.map(function(f) {
       return '<div class="col-md-4"><div class="p-2 bg-light rounded" style="font-size:0.85em;">' + f + '</div></div>';
     }).join('') + '</div>' : '<p class="text-muted">Nenhum opcional informado.</p>';

@@ -1160,6 +1160,7 @@ def scrape_details(olx_id):
                 "car_features": json.loads(listing.car_features) if listing.car_features else [],
                 "created_at": listing.created_at.isoformat() if listing.created_at else None,
                 "updated_at": listing.updated_at.isoformat() if listing.updated_at else None,
+                "source": listing.source or "olx",
                 "image_url": _first_img(),
                 "image_urls": json.loads(listing.image_urls) if listing.image_urls else [],
             }
