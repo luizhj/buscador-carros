@@ -1205,6 +1205,12 @@ def scrape_details(olx_id):
                                             if 0.5 <= _v <= 8.0:
                                                 listing.motorpower = f"{_v:.1f}"
                                                 break
+                                        if not listing.motorpower:
+                                            for _m2 in re.findall(r'\b(\d{3,4})\b', _vc):
+                                                _v2 = int(_m2)
+                                                if 900 <= _v2 <= 8000:
+                                                    listing.motorpower = f"{_v2 / 1000:.1f}"
+                                                    break
                                 except Exception:
                                     pass
 

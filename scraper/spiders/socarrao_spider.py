@@ -191,6 +191,15 @@ class SocarraoSpider(scrapy.Spider):
                         break
                 except ValueError:
                     pass
+            if not motorpower:
+                for _m in re.findall(r'\b(\d{3,4})\b', version):
+                    try:
+                        _v = int(_m)
+                        if 900 <= _v <= 8000:
+                            motorpower = f"{_v / 1000:.1f}"
+                            break
+                    except ValueError:
+                        pass
 
         specs = card.css(".vehicle-card__right--specs li::text").getall()
         specs = [s.strip() for s in specs]
