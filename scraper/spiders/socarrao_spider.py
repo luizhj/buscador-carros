@@ -12,7 +12,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from config import SOCARRAO_URL as _FALLBACK_SOCARRAO_URL
-from models import CarListing, IgnoredListing, get_session
+from models import CarListing, IgnoredListing, BlacklistRule, get_session
 from scraper.spiders.olx_spider import _cidades_permitidas
 
 
@@ -74,6 +74,12 @@ class SocarraoSpider(scrapy.Spider):
             pass
         self._start_url = kwargs.get("start_url") or saved_url or _FALLBACK_SOCARRAO_URL
         self._max_items = int(kwargs.get("max_items", 0))
+        self._blacklist = []
+        _bs = get_session()
+        try:
+            self._blacklist = _bs.query(BlacklistRule).all()
+        finally:
+            _bs.close()
 
     def start_requests(self):
         html = self._fetch_with_browser(self._start_url)
@@ -168,6 +174,8 @@ class SocarraoSpider(scrapy.Spider):
         for card in cards:
             item = self._item_from_card(card)
             if item:
+                if self._is_blacklisted(item):
+                    continue
                 if allowed and item.get("city") and item["city"] not in allowed:
                     continue
                 yield item
@@ -296,6 +304,19 @@ class SocarraoSpider(scrapy.Spider):
             motorpower=motorpower,
             cartype=cartype,
         )
+
+    def _is_blacklisted(self, item):
+        for rule in self._blacklist:
+            if rule.brand and item.get("brand") != rule.brand:
+                continue
+            if rule.model and item.get("model") != rule.model:
+                continue
+            if rule.motorpower and item.get("motorpower") != rule.motorpower:
+                continue
+            if rule.transmission and item.get("transmission") != rule.transmission:
+                continue
+            return True
+        return False
 
     def _extract_jsonld(self, card):
         raw = card.get()
