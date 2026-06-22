@@ -1190,6 +1190,13 @@ def scrape_details(olx_id):
                                        "caminhão leve": "Caminhão Leve", "buggy": "Buggy"}
                             listing.cartype = _ct_map.get(_ct.lower(), _ct)
 
+                        _ver_mais = _p.locator(".acessories-and-options-vehicle details summary").first
+                        if _ver_mais:
+                            try:
+                                _ver_mais.click()
+                                _time.sleep(1)
+                            except Exception:
+                                pass
                         _acc_items = _p.locator(".acessories-and-options-vehicle__list li").all()
                         if _acc_items:
                             _feats = [li.text_content().strip() for li in _acc_items if li.text_content().strip()]
