@@ -1095,6 +1095,22 @@ def list_filters():
         session.close()
 
 
+def _fmt_mp(v):
+    try:
+        _n = float(v)
+        if 1.0 <= _n <= 1.9:
+            return f"{_n:.1f}"
+        elif 2.0 <= _n <= 2.9:
+            return "2.0 - 2.9"
+        elif 3.0 <= _n <= 3.9:
+            return "3.0 - 3.9"
+        elif 4.0 <= _n:
+            return "4.0 ou mais"
+        return None
+    except (ValueError, TypeError):
+        return None
+
+
 @app.route("/scrape-details/<olx_id>")
 def scrape_details(olx_id):
     force = request.args.get("force") == "1"
@@ -1205,13 +1221,13 @@ def scrape_details(olx_id):
                                         for _m in re.findall(r'(\d+[.,]\d+)', _vc):
                                             _v = float(_m.replace(",", "."))
                                             if 0.5 <= _v <= 8.0:
-                                                listing.motorpower = f"{_v:.1f}"
+                                                listing.motorpower = _fmt_mp(_v)
                                                 break
                                         if not listing.motorpower:
                                             for _m2 in re.findall(r'\b(\d{3,4})\b', _vc):
                                                 _v2 = int(_m2)
                                                 if 900 <= _v2 <= 8000:
-                                                    listing.motorpower = f"{_v2 / 1000:.1f}"
+                                                    listing.motorpower = _fmt_mp(_v2 / 1000)
                                                     break
                                 except Exception:
                                     pass

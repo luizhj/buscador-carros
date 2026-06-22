@@ -187,7 +187,7 @@ class SocarraoSpider(scrapy.Spider):
                 try:
                     _v = float(_m.replace(",", "."))
                     if 0.5 <= _v <= 8.0:
-                        motorpower = f"{_v:.1f}"
+                        motorpower = self._format_motorpower(_v)
                         break
                 except ValueError:
                     pass
@@ -196,7 +196,7 @@ class SocarraoSpider(scrapy.Spider):
                     try:
                         _v = int(_m)
                         if 900 <= _v <= 8000:
-                            motorpower = f"{_v / 1000:.1f}"
+                            motorpower = self._format_motorpower(_v / 1000)
                             break
                     except ValueError:
                         pass
@@ -280,6 +280,22 @@ class SocarraoSpider(scrapy.Spider):
             return None
         digits = re.sub(r"\D", "", raw)
         return int(digits) if digits else None
+
+    @staticmethod
+    def _format_motorpower(val):
+        try:
+            v = float(val)
+            if 1.0 <= v <= 1.9:
+                return f"{v:.1f}"
+            elif 2.0 <= v <= 2.9:
+                return "2.0 - 2.9"
+            elif 3.0 <= v <= 3.9:
+                return "3.0 - 3.9"
+            elif 4.0 <= v:
+                return "4.0 ou mais"
+            return None
+        except (ValueError, TypeError):
+            return None
 
     def _parse_price(self, raw):
         if raw is None:
