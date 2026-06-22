@@ -43,18 +43,18 @@ async function poll() {
     const lines = text.trim().split('\n');
     const lastLine = lines[lines.length - 1];
     if (!totalAds) {
-      const mTotal = text.match(/Total de anúncios: (\d+)/);
-      if (mTotal) totalAds = parseInt(mTotal[1]);
+      const mTotal = text.match(/Total de anúncios: (\d+)|Total: (\d+) anúncio/);
+      if (mTotal) totalAds = parseInt(mTotal[1] || mTotal[2]);
     }
-    const m = lastLine.match(/Scraped (\d+) items/);
+    const m = lastLine.match(/Scraped (\d+) items|Total: (\d+) anúncio/);
     if (m) {
-      const n = parseInt(m[1]);
+      const n = parseInt(m[1] || m[2]);
       const pct = totalAds ? Math.min(Math.round(n / totalAds * 100), 100) : 0;
       bar.style.width = Math.max(pct, 1) + '%';
       counter.textContent = totalAds ? n + ' anúncios baixados de ' + totalAds : n + ' anúncios baixados';
     }
   }
-  if (text.includes('Done!')) {
+  if (text.includes('Done!') || text.includes('Concluído!')) {
     bar.style.width = '100%';
     bar.classList.remove('progress-bar-animated');
     status.textContent = 'Concluído! Redirecionando...';

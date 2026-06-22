@@ -70,7 +70,7 @@ class SocarraoSpider(scrapy.Spider):
         except (FileNotFoundError, OSError):
             pass
         self._start_url = kwargs.get("start_url") or saved_url or _FALLBACK_SOCARRAO_URL
-        self._max_items = int(kwargs.get("max_items", 60))
+        self._max_items = int(kwargs.get("max_items", 0))
 
     def start_requests(self):
         html = self._fetch_with_browser(self._start_url)
@@ -81,36 +81,45 @@ class SocarraoSpider(scrapy.Spider):
         for item in items:
             yield item
 
-        print(f"  Total: {len(items)} anúncio(s).")
-
+        print(f"  Total: {len(items)} anúncio(s).", flush=True)
+    
     def _fetch_with_browser(self, url):
-        print(f"  Carregando: {url}")
+        print(f"  Carregando: {url}", flush=True)
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page()
                 page.set_viewport_size({"width": 1366, "height": 768})
-                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
 
                 import time as _time
                 _time.sleep(2)
 
+                h1 = page.locator("h1").first.text_content() or ""
+                import re as _re
+                _total = _re.search(r"[\d.]+", h1.replace(".", ""))
+                total_count = int(_total.group()) if _total else 0
+                if total_count:
+                    print(f"Total de anúncios: {total_count}", flush=True)
+                else:
+                    print(f"  H1: {h1.strip()[:80]}", flush=True)
+
                 prev = 0
                 same_count = 0
-                for scroll_round in range(50):
+                for scroll_round in range(100):
                     cards = page.locator(".vehicle-card")
                     current = cards.count()
-                    if current > 0:
-                        print(f"    Rodada {scroll_round + 1}: {current} veículos", end="\r")
-                    if current >= self._max_items:
-                        print(f"\n    Atingido limite de {self._max_items} veículos.")
+                    if current > 0 and current != prev:
+                        print(f"Scraped {current} items", flush=True)
+                    if current >= self._max_items > 0:
+                        print(f"\n    Atingido limite de {self._max_items} veículos.", flush=True)
                         break
                     if current == prev:
                         same_count += 1
                     else:
                         same_count = 0
                     if same_count >= 5:
-                        print(f"\n    Nenhum novo veículo após {same_count} tentativas.")
+                        print(f"\n    Nenhum novo veículo após {same_count} tentativas.", flush=True)
                         break
                     prev = current
                     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -120,7 +129,7 @@ class SocarraoSpider(scrapy.Spider):
                 browser.close()
                 return html
         except Exception as e:
-            print(f"  ERRO no navegador: {e}")
+            print(f"  ERRO no navegador: {e}", flush=True)
             return None
 
     def _parse_listing(self, html):
@@ -129,10 +138,10 @@ class SocarraoSpider(scrapy.Spider):
 
         cards = sel.css(".vehicle-card")
         if not cards:
-            print("  Nenhum card .vehicle-card encontrado.")
+            print("  Nenhum card .vehicle-card encontrado.", flush=True)
             return
 
-        print(f"  Cards encontrados: {len(cards)}")
+        print(f"  Cards encontrados: {len(cards)}", flush=True)
 
         for card in cards:
             item = self._item_from_card(card)

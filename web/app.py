@@ -889,6 +889,8 @@ def _save_scrape_result(start_time):
         with open(LOG_FILE) as f:
             text = f.read()
         m = re.search(r"Done! Scraped (\d+) listings total\.", text)
+        if not m:
+            m = re.search(r"Total: (\d+) anúncio\(s\)\.", text)
         count = int(m.group(1)) if m else 0
         elapsed = round((datetime.now(tz=timezone.utc) - start_time).total_seconds())
         with open(SCRAPE_RESULT_FILE, "w") as f:
