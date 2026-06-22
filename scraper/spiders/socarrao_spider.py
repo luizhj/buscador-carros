@@ -207,6 +207,14 @@ class SocarraoSpider(scrapy.Spider):
         transmission = self._clean_transmission(specs[1]) if len(specs) > 1 else None
         mileage = self._parse_mileage(specs[2]) if len(specs) > 2 else None
         fuel = specs[3] if len(specs) > 3 else None
+        if not transmission and title:
+            _title_lower = title.lower()
+            if " autom" in _title_lower or " aut." in _title_lower:
+                transmission = "Automático"
+            elif " mec" in _title_lower or " mec." in _title_lower or " manual" in _title_lower:
+                transmission = "Manual"
+            elif " semi" in _title_lower:
+                transmission = "Semi-Automático"
 
         raw_image = card.css("img::attr(src)").get()
         if raw_image and "vehicle_sample" not in raw_image:
