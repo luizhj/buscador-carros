@@ -179,6 +179,8 @@ class SocarraoSpider(scrapy.Spider):
             return None
 
         brand = card.css(".brand-model-formatter__brand::text").get("").strip()
+        _brand_map = {"caoa chery": "Chery", "chery": "Chery"}
+        brand = _brand_map.get(brand.lower().strip(), brand)
         model = card.css(".brand-model-formatter__model::text").get("").strip()
         version = card.css(".vehicle-card__right--version::text").get("").strip()
         title = f"{brand} {model} {version}".strip() if version else f"{brand} {model}".strip()
