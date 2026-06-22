@@ -1182,7 +1182,13 @@ def scrape_details(olx_id):
                         if "c\u00e2mbio" in _about_map and not listing.transmission:
                             listing.transmission = _about_map["c\u00e2mbio"]
                         if "carroceria" in _about_map and not listing.cartype:
-                            listing.cartype = _about_map["carroceria"]
+                            _ct = _about_map["carroceria"]
+                            _ct_map = {"picape": "Pick-up", "hatch": "Hatch", "sedã": "Sedã", "sedan": "Sedã",
+                                       "suv": "SUV", "conversível": "Conversível", "conversivel": "Conversível",
+                                       "coupé": "Coupé", "coupe": "Coupé", "perua": "Perua",
+                                       "van/utilitário": "Van/Utilitário", "van": "Van/Utilitário",
+                                       "caminhão leve": "Caminhão Leve", "buggy": "Buggy"}
+                            listing.cartype = _ct_map.get(_ct.lower(), _ct)
 
                         _acc_items = _p.locator(".acessories-and-options-vehicle__list li").all()
                         if _acc_items:
