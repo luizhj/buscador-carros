@@ -1149,44 +1149,70 @@ def scrape_details(olx_id):
         if not force and listing.description:
             return _listing_fields(listing.description, True)
 
-        _scraper = cloudscraper.create_scraper()
-        resp = _scraper.get(listing.listing_url, timeout=30)
-        if resp.status_code != 200:
-            return {"error": f"Erro ao acessar OLX: HTTP {resp.status_code}"}, 502
-
-        sel = Selector(text=resp.text)
         description = None
         olx_avg_price = None
         fipe_price = None
 
-        raw_json = sel.css("script#initial-data::attr(data-json)").get()
-        if raw_json:
+        if listing.source == "socarrao" or (olx_id and olx_id.startswith("SC")):
+            from playwright.sync_api import sync_playwright
+            import time as _time
             try:
-                data = json.loads(html.unescape(raw_json))
-                ad = data.get("ad") or {}
-                raw = ad.get("body") or ad.get("description") or ""
-                raw = re.sub(r"<br\s*/?>", "\n", raw, flags=re.IGNORECASE)
-                raw = re.sub(r"<[^>]+>", "", raw)
-                description = raw.strip() or None
-                fipe_raw = (ad.get("abuyFipePrice") or {}).get("fipePrice")
-                if fipe_raw is not None:
-                    fipe_price = int(fipe_raw) * 100
-                priceref = ad.get("abuyPriceRef") or {}
-                avg_raw = priceref.get("price_p50")
-                if avg_raw is not None:
-                    olx_avg_price = int(avg_raw) * 100
-                imgs = ad.get("images") or []
-                if imgs:
-                    urls = [img["original"] for img in imgs if img.get("original")]
-                    if urls:
-                        listing.image_urls = json.dumps(urls)
-            except (json.JSONDecodeError, ValueError, TypeError):
-                pass
+                with sync_playwright() as _pw:
+                    _browser = _pw.chromium.launch(headless=True, timeout=20000)
+                    _page = _browser.new_page()
+                    _page.goto(listing.listing_url, wait_until="domcontentloaded", timeout=30000)
+                    _time.sleep(3)
+                    for _s in _page.locator('script[type="application/ld+json"]').all():
+                        try:
+                            _data = json.loads(_s.text_content())
+                            if _data.get("description"):
+                                description = _data["description"].strip()
+                                break
+                        except (json.JSONDecodeError, ValueError, TypeError):
+                            pass
+                    if not description:
+                        _desc_el = _page.locator("[class*=description]").first
+                        if _desc_el:
+                            description = _desc_el.text_content().strip() or None
+                    _browser.close()
+            except Exception as _e:
+                return {"error": f"Erro ao acessar SóCarrão: {_e}"}, 502
+        else:
+            _scraper = cloudscraper.create_scraper()
+            resp = _scraper.get(listing.listing_url, timeout=30)
+            if resp.status_code != 200:
+                return {"error": f"Erro ao acessar OLX: HTTP {resp.status_code}"}, 502
 
-        if not description:
-            paragraphs = sel.css("meta[property='og:description']::attr(content)").get()
-            if paragraphs:
-                description = paragraphs.strip() or None
+            sel = Selector(text=resp.text)
+
+            raw_json = sel.css("script#initial-data::attr(data-json)").get()
+            if raw_json:
+                try:
+                    data = json.loads(html.unescape(raw_json))
+                    ad = data.get("ad") or {}
+                    raw = ad.get("body") or ad.get("description") or ""
+                    raw = re.sub(r"<br\s*/?>", "\n", raw, flags=re.IGNORECASE)
+                    raw = re.sub(r"<[^>]+>", "", raw)
+                    description = raw.strip() or None
+                    fipe_raw = (ad.get("abuyFipePrice") or {}).get("fipePrice")
+                    if fipe_raw is not None:
+                        fipe_price = int(fipe_raw) * 100
+                    priceref = ad.get("abuyPriceRef") or {}
+                    avg_raw = priceref.get("price_p50")
+                    if avg_raw is not None:
+                        olx_avg_price = int(avg_raw) * 100
+                    imgs = ad.get("images") or []
+                    if imgs:
+                        urls = [img["original"] for img in imgs if img.get("original")]
+                        if urls:
+                            listing.image_urls = json.dumps(urls)
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    pass
+
+            if not description:
+                paragraphs = sel.css("meta[property='og:description']::attr(content)").get()
+                if paragraphs:
+                    description = paragraphs.strip() or None
 
         listing.description = description
         listing.olx_avg_price = olx_avg_price
