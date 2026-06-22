@@ -941,8 +941,6 @@ def _run_socarrao_scraper_background(url, clear):
 def _run_scraper_background(url, cidades):
     """Roda o scraper em background escrevendo log em arquivo."""
     _start = datetime.now(tz=timezone.utc)
-    with open(CIDADES_PATH, "w") as f:
-        json.dump(cidades, f, indent=2, ensure_ascii=False)
     from clear_db import clear_db
     removed = clear_db()
     with open(CURRENT_URL_FILE, "w") as f:
@@ -965,8 +963,6 @@ def _run_scraper_background(url, cidades):
 def _run_scraper_background_noclear(url, cidades):
     """Roda o scraper em background sem limpar o banco."""
     _start = datetime.now(tz=timezone.utc)
-    with open(CIDADES_PATH, "w") as f:
-        json.dump(cidades, f, indent=2, ensure_ascii=False)
     with open(CURRENT_URL_FILE, "w") as f:
         f.write(url)
     with open(LOG_FILE, "w") as f:
