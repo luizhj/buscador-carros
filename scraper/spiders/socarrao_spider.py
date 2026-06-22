@@ -13,6 +13,7 @@ if _project_root not in sys.path:
 
 from config import SOCARRAO_URL as _FALLBACK_SOCARRAO_URL
 from models import CarListing, IgnoredListing, get_session
+from scraper.spiders.olx_spider import _cidades_permitidas
 
 
 class SocarraoItem(scrapy.Item):
@@ -163,9 +164,12 @@ class SocarraoSpider(scrapy.Spider):
 
         print(f"  Cards encontrados: {len(cards)}", flush=True)
 
+        allowed = _cidades_permitidas()
         for card in cards:
             item = self._item_from_card(card)
             if item:
+                if allowed and item.get("city") and item["city"] not in allowed:
+                    continue
                 yield item
 
     def _item_from_card(self, card):
